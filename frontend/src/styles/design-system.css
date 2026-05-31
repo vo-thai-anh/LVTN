@@ -1,0 +1,235 @@
+/* ═══════════════════════════════════════════════════════════════
+   BOOKONE DESIGN SYSTEM — Shared CSS
+   Dùng chung cho: Login, Register, Cart, Checkout, Orders, OrderDetail
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Root vars ── */
+:root {
+  --ds-bg:       #f1f3f6;
+  --ds-navy:     #1e3a5f;
+  --ds-navy-d:   #152c4a;
+  --ds-blue:     #2563eb;
+  --ds-red:      #dc2626;
+  --ds-green:    #059669;
+  --ds-card:     #fff;
+  --ds-border:   #e9ecef;
+  --ds-input-bg: #f8fafc;
+  --ds-text:     #111827;
+  --ds-muted:    #6b7280;
+  --ds-radius:   14px;
+  --ds-radius-lg: 20px;
+  --ds-radius-pill: 999px;
+
+  /* Premium effects */
+  --ds-shadow-leaf: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --ds-shadow-premium: 0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 10px 20px -5px rgba(0, 0, 0, 0.04);
+  --ds-glass-bg: rgba(255, 255, 255, 0.85);
+  --ds-glass-border: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Page root ── */
+.ds-page {
+  background: var(--ds-bg);
+  min-height: 100vh;
+}
+.ds-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+/* ── Card ── */
+.ds-card {
+  background: var(--ds-card);
+  border-radius: var(--ds-radius);
+  border: 1px solid var(--ds-border);
+  box-shadow: 0 1px 5px rgba(0,0,0,0.055);
+}
+
+/* ── Section heading inside card ── */
+.ds-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--ds-navy);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--ds-border);
+  margin: 0;
+}
+
+/* ── Input field ── */
+.ds-field { margin-bottom: 1.1rem; }
+.ds-field-compact { display: flex; flex-direction: column; gap: 0.5rem; }
+.ds-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+.ds-label-compact {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0px;
+}
+.ds-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ds-input-ico {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  font-size: 14px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+.ds-input, .ds-input-refined {
+  width: 100%;
+  padding: 0.6rem 1rem 0.6rem 2.75rem !important;
+  border: 1.5px solid var(--ds-border) !important;
+  border-radius: 12px !important;
+  font-size: 0.9375rem !important;
+  background: var(--ds-input-bg) !important;
+  color: var(--ds-text) !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+  display: block !important;
+  line-height: 1.2 !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+}
+.ds-input:focus, .ds-input-refined:focus { 
+  border-color: var(--ds-blue) !important; 
+  background: #fff !important; 
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08) !important;
+}
+
+/* Autofill fixes - forced with !important to defeat browser defaults */
+.ds-input:-webkit-autofill,
+.ds-input:-webkit-autofill:hover, 
+.ds-input:-webkit-autofill:focus,
+.ds-input-refined:-webkit-autofill,
+.ds-input-refined:-webkit-autofill:hover, 
+.ds-input-refined:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ds-text) !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  background-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+.ds-input.has-error, .ds-input-refined.has-error { border-color: var(--ds-red) !important; }
+.ds-input.is-valid, .ds-input-refined.is-valid  { border-color: var(--ds-green) !important; }
+.ds-input-pass { padding-right: 2.85rem !important; }
+
+.ds-field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--ds-red);
+  margin-top: 4px;
+}
+
+/* ── Button primary ── */
+.ds-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.7rem 1.5rem;
+  background: var(--ds-navy);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.ds-btn-primary:hover:not(:disabled) { background: var(--ds-navy-d); }
+.ds-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.ds-btn-pill { border-radius: var(--ds-radius-pill) !important; }
+
+/* ── Button outline ── */
+.ds-btn-outline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.68rem 1.2rem;
+  background: #fff;
+  color: var(--ds-navy);
+  border: 2px solid var(--ds-navy);
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s;
+  text-decoration: none;
+}
+.ds-btn-outline:hover:not(:disabled) { background: #eff6ff; }
+.ds-btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Spinner ── */
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+.ds-spin { animation: ds-spin .8s linear infinite; flex-shrink: 0; }
+
+/* ── Status badge ── */
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.ds-badge-wait    { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.ds-badge-info    { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+.ds-badge-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+.ds-badge-danger  { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* ── Page title row ── */
+.ds-page-hd {
+  margin-bottom: 1.25rem;
+}
+.ds-page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--ds-navy);
+  margin: 0 0 0.25rem;
+}
+.ds-page-sub {
+  font-size: 0.84rem;
+  color: var(--ds-muted);
+  margin: 0;
+}
+
+/* ── Shimmer ── */
+@keyframes ds-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.ds-sk {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e8eaed 25%, #f2f5f7 50%, #e8eaed 75%);
+  background-size: 1000px 100%;
+  animation: ds-shimmer 1.3s infinite;
+  display: block;
+}

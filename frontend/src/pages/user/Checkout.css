@@ -1,0 +1,314 @@
+/* ============================================================
+   CHECKOUT PAGE (ck-*)
+   Redesigned for Premium UI
+   ============================================================ */
+
+.ck-layout { 
+  display: grid; 
+  grid-template-columns: 1fr; 
+  gap: 1.5rem; 
+  align-items: start; 
+}
+
+@media (min-width: 1024px) {
+  .ck-layout { 
+    grid-template-columns: 6.5fr 3.5fr; 
+    gap: 2rem; 
+  }
+}
+
+.checkout-container { 
+  max-width: 1200px !important; 
+  margin: 0 auto; 
+}
+
+/* ── Form Section ── */
+.ck-col-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ck-card-bd { 
+  padding: 1.75rem 2rem; 
+}
+
+.ck-field-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .ck-field-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* ── Payment Options ── */
+.ck-pay-bd { 
+  padding: 1.5rem 2rem; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1.25rem; 
+}
+
+.ck-pay-opt {
+  display: flex; 
+  align-items: center; 
+  gap: 1rem;
+  padding: 1.25rem 1.5rem; 
+  border: 2px solid var(--ds-border);
+  border-radius: 16px; 
+  cursor: pointer; 
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+  background: var(--ds-input-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.ck-pay-opt:hover { 
+  border-color: #cbd5e1; 
+  background: #fff;
+  transform: translateY(-2px);
+  box-shadow: var(--ds-shadow-leaf);
+}
+
+.ck-pay-opt.active { 
+  border-color: var(--ds-navy); 
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--ds-navy);
+}
+
+.ck-pay-emoji { 
+  font-size: 1.75rem; 
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.ck-pay-txt { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 4px; 
+}
+
+.ck-pay-txt strong { 
+  font-size: 0.95rem; 
+  color: var(--ds-text); 
+  font-weight: 700;
+}
+
+.ck-pay-txt span { 
+  font-size: 0.8rem; 
+  color: var(--ds-muted); 
+}
+
+.ck-pay-chk { 
+  margin-left: auto;
+  color: var(--ds-navy);
+}
+
+/* ── Online Payment Details ── */
+.ck-qr-box {
+  margin-top: 0.5rem; 
+  background: var(--ds-input-bg); 
+  border: 1px solid var(--ds-border);
+  border-radius: 16px; 
+  padding: 2rem; 
+  text-align: center;
+  animation: ds-fade-in 0.3s ease;
+}
+
+@keyframes ds-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ck-qr-hdr { 
+  font-size: 0.9rem; 
+  font-weight: 800; 
+  color: var(--ds-navy); 
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ck-qr-img { 
+  width: 180px; 
+  height: 180px; 
+  border-radius: 16px; 
+  border: 1px solid var(--ds-border);
+  background: #fff;
+  padding: 10px; 
+  margin-bottom: 1.5rem; 
+  box-shadow: var(--ds-shadow-leaf);
+}
+
+.ck-qr-details { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 0.75rem; 
+  text-align: left; 
+  background: #fff; 
+  padding: 1.25rem; 
+  border-radius: 12px;
+  border: 1px solid var(--ds-border);
+}
+
+.ck-qr-row { 
+  display: flex; 
+  justify-content: space-between; 
+  font-size: 0.85rem; 
+}
+
+.ck-qr-row span { 
+  color: var(--ds-muted); 
+}
+
+.ck-qr-row strong { 
+  color: var(--ds-text); 
+  font-weight: 700; 
+}
+
+.ck-cod-box {
+  margin-top: 0.5rem; 
+  display: flex; 
+  align-items: center; 
+  gap: 12px;
+  background: #f0f7ff; 
+  padding: 1.25rem; 
+  border-radius: 12px; 
+  border: 1px solid #bae6fd;
+}
+
+.ck-cod-box span { 
+  font-size: 0.88rem; 
+  color: #0369a1; 
+  line-height: 1.5; 
+}
+
+/* ── Sidebar Summary ── */
+.ck-col-side {
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .ck-col-side {
+    position: sticky;
+    top: 100px;
+  }
+}
+
+.ck-summary-card {
+  background: var(--ds-glass-bg) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--ds-glass-border) !important;
+  box-shadow: var(--ds-shadow-premium) !important;
+  border-radius: 20px !important;
+}
+
+.ck-sum-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1.25rem; 
+}
+
+.ck-sum-item { 
+  display: flex; 
+  gap: 1rem; 
+  align-items: center; 
+}
+
+.ck-sum-img { 
+  width: 56px; 
+  height: 72px; 
+  object-fit: cover; 
+  border-radius: 8px; 
+  border: 1px solid var(--ds-border); 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.ck-sum-info { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 2px;
+  min-width: 0; 
+}
+
+.ck-sum-name { 
+  font-size: 0.88rem; 
+  font-weight: 700; 
+  color: var(--ds-text); 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}
+
+.ck-sum-qty { 
+  font-size: 0.75rem; 
+  color: var(--ds-muted); 
+}
+
+.ck-sum-price { 
+  font-size: 0.9rem; 
+  font-weight: 800; 
+  color: var(--ds-navy); 
+}
+
+.ck-sum-line { 
+  height: 1px; 
+  background: var(--ds-border); 
+  margin: 1.5rem 0; 
+}
+
+.ck-sum-totals { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 0.75rem; 
+  margin-bottom: 1.5rem;
+}
+
+.ck-sum-tr { 
+  display: flex; 
+  justify-content: space-between; 
+  font-size: 0.9rem; 
+  color: var(--ds-muted); 
+}
+
+.ck-sum-grand { 
+  margin-top: 0.5rem; 
+  padding-top: 1rem;
+  border-top: 1.5px dashed var(--ds-border);
+  font-size: 1.35rem; 
+  font-weight: 950; 
+  color: var(--ds-red); 
+}
+
+.ck-sum-grand span:first-child { 
+  color: var(--ds-navy); 
+  font-size: 1rem; 
+  font-weight: 800;
+}
+
+.ck-back {
+  display: block; 
+  text-align: center; 
+  font-size: 0.85rem;
+  color: var(--ds-muted); 
+  text-decoration: none; 
+  margin-top: 1.5rem; 
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.ck-back:hover { 
+  color: var(--ds-navy); 
+}
+
+/* Custom Textarea for Checkout */
+.ck-textarea {
+  resize: none;
+  min-height: 90px !important;
+}

@@ -1,0 +1,162 @@
+/* ============================================================
+   CONFIRM PAGE (cf-*)
+   Redesigned for Premium UI Consistency
+   ============================================================ */
+
+.cf-root { 
+  min-height: calc(100vh - 100px); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  padding: 3rem 1.25rem; 
+  background: var(--ds-bg);
+}
+
+.cf-card { 
+  background: var(--ds-glass-bg); 
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--ds-glass-border); 
+  border-radius: 24px; 
+  padding: 3.5rem 2.5rem; 
+  text-align: center; 
+  max-width: 540px; 
+  width: 100%; 
+  box-shadow: var(--ds-shadow-premium);
+  animation: cf-entrance 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cf-entrance {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.cf-icon-wrap { 
+  position: relative; 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  width: 110px; 
+  height: 110px; 
+  margin: 0 auto 2rem; 
+}
+
+.cf-icon { 
+  color: var(--ds-green); 
+  position: relative; 
+  z-index: 2; 
+  filter: drop-shadow(0 4px 8px rgba(5, 150, 105, 0.2));
+}
+
+.cf-icon-ring { 
+  position: absolute; 
+  inset: 0; 
+  border-radius: 50%; 
+  background: #f0fdf4; 
+  border: 2px solid #bbf7d0; 
+  animation: cfPulse 2s infinite ease-in-out; 
+}
+
+@keyframes cfPulse { 
+  0%, 100% { transform: scale(1); opacity: 1; } 
+  50% { transform: scale(1.15); opacity: 0.4; } 
+}
+
+.cf-title { 
+  font-size: 2rem; 
+  font-weight: 900; 
+  color: var(--ds-navy); 
+  margin-bottom: 1rem; 
+  letter-spacing: -0.5px;
+}
+
+.cf-sub { 
+  font-size: 1rem; 
+  color: var(--ds-muted); 
+  line-height: 1.7; 
+  margin-bottom: 2.5rem; 
+}
+
+.cf-info-box { 
+  background: #fff; 
+  border-radius: 18px; 
+  padding: 1.5rem; 
+  text-align: left; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1rem; 
+  margin-bottom: 2rem; 
+  border: 1px solid var(--ds-border); 
+  box-shadow: var(--ds-shadow-leaf);
+}
+
+.cf-info-row { 
+  display: flex; 
+  align-items: flex-start; 
+  gap: 1rem; 
+  font-size: 0.9rem; 
+  color: var(--ds-text); 
+  line-height: 1.5; 
+}
+
+.cf-info-icon { 
+  color: var(--ds-navy); 
+  flex-shrink: 0; 
+  margin-top: 2px; 
+}
+
+.cf-redirect-note { 
+  font-size: 0.82rem; 
+  color: var(--ds-muted); 
+  margin-bottom: 2rem; 
+  font-style: italic;
+}
+
+.cf-actions { 
+  display: flex; 
+  gap: 1rem; 
+  justify-content: center; 
+}
+
+@media (max-width: 480px) {
+  .cf-actions {
+    flex-direction: column;
+  }
+}
+
+.cf-btn-home, .cf-btn-shop { 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  gap: 0.6rem; 
+  padding: 0.9rem 1.75rem; 
+  border-radius: 50px; 
+  font-size: 0.92rem; 
+  font-weight: 800; 
+  text-decoration: none; 
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+  flex: 1;
+}
+
+.cf-btn-home { 
+  background: #fff; 
+  color: var(--ds-navy); 
+  border: 2px solid var(--ds-navy); 
+}
+
+.cf-btn-home:hover { 
+  background: var(--ds-input-bg);
+  transform: translateY(-2px);
+  box-shadow: var(--ds-shadow-leaf);
+}
+
+.cf-btn-shop { 
+  background: var(--ds-navy); 
+  color: #fff; 
+  border: none; 
+}
+
+.cf-btn-shop:hover { 
+  background: var(--ds-navy-d);
+  transform: translateY(-2px);
+  box-shadow: var(--ds-shadow-leaf);
+}
