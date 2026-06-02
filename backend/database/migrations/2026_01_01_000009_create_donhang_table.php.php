@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('donhang', function (Blueprint $table) {
-            $table->char('don_hang_id',10)->primary();
+            $table->id('don_hang_id');
             $table->timestamp('ngay_tao')->useCurrent();
             $table->decimal('thanh_tien',10,2)->nullable();
             $table->string('trang_thai',255)->nullable();
@@ -23,12 +23,9 @@ return new class extends Migration
             $table->char('ten_nguoi_nhan',30)->nullable();
             $table->string('dia_chi_giao_hang',255)->nullable();
             $table->integer('so_luong_sach')->nullable();
-            $table->char('khach_hang', 10);
-            $table->foreign('khach_hang')->references('khach_hang_id')->on('khachhang');
-            $table->char('gio_hang', 10);
-            $table->foreign('gio_hang')->references('gio_hang_id')->on('giohang');
-            $table->char('thanh_toan', 10);
-            $table->foreign('thanh_toan')->references('thanh_toan_id')->on('thanhtoan');
+            $table->foreignId('khach_hang')->references('khach_hang_id')->on('khachhang');
+            $table->foreignId('gio_hang')->references('gio_hang_id')->on('giohang');
+            $table->foreignId('thanh_toan')->references('thanh_toan_id')->on('thanhtoan');
         });
     }
 

@@ -8,7 +8,7 @@ class NhanVien extends Model
 {
     protected $table = 'nhanvien';
     protected $primaryKey = 'nhan_vien_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
         'ten_nhan_vien',
         'nam_sinh',
@@ -18,7 +18,7 @@ class NhanVien extends Model
         'email',
         'ngay_tao',
     ];
-    public $incrementing = false;
+    public $incrementing = true;
     public $timestamps = false;
 
     public function taiKhoan()
@@ -26,8 +26,4 @@ class NhanVien extends Model
         return $this->belongsTo(TaiKhoan::class, 'tai_khoan_id', 'tai_khoan_id');
     }
 
-    public function loaiNguoiDung()
-    {
-        return $this->belongsTo(LoaiNguoiDung::class, 'loai_nguoi_dung', 'loai_nguoi_dung_id');
-    }
 }

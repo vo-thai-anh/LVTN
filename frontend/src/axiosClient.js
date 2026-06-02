@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // 1. Instance cho Laravel (User)
-const userBaseURL = (import.meta.env.VITE_API_USER_URL || import.meta.env.VITE_USER_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '');
+const envUserUrl = import.meta.env.VITE_API_USER_URL || import.meta.env.VITE_USER_API_URL || import.meta.env.VITE_API_BASE_URL;
+const userBaseURL = (envUserUrl || '/api-user').replace(/\/+$/, '');
 export const userAxios = axios.create({
   baseURL: userBaseURL,
   headers: {
@@ -11,7 +12,8 @@ export const userAxios = axios.create({
 });
 
 // 2. Instance cho Admin (Laravel API)
-const adminBaseURL = (import.meta.env.VITE_API_ADMIN_URL || import.meta.env.VITE_ADMIN_API_URL || userBaseURL).replace(/\/+$/, '');
+const envAdminUrl = import.meta.env.VITE_API_ADMIN_URL || import.meta.env.VITE_ADMIN_API_URL || import.meta.env.VITE_API_BASE_URL;
+const adminBaseURL = (envAdminUrl || '/api-admin').replace(/\/+$/, '');
 export const adminAxios = axios.create({
   baseURL: adminBaseURL,
   headers: {

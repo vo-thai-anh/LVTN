@@ -10,12 +10,13 @@ use App\Http\Controllers\API\GioHangController;
 use App\Http\Controllers\API\DonHangController;
 use App\Http\Controllers\API\GioHang_ItemController;
 use App\Http\Controllers\API\KhachHangController;
+use App\Http\Controllers\API\LoaiNguoiDungController;
 use App\Http\Controllers\API\NhanVienController;
 use App\Http\Controllers\API\PhieuNhapController;
 use App\Http\Controllers\API\PhieuXuatController;
 
 Route::post('/login',[AuthController::class,'login']);
-Route::post('/register',[AuthController::class,'acpregister']);
+Route::post('/register',[AuthController::class,'register']);
 Route::get('/sach/filter', [SachController::class, 'filter']);
 Route::get('/sach/search', [SachController::class, 'search']);
 Route::get('/sach', [SachController::class, 'index']);
@@ -26,6 +27,11 @@ Route::get('/loaisach/{id}', [LoaiSachController::class, 'show']);
 
 Route::post('/upload', [ImageController::class, 'upload']);
 
+route::get('/loainguoidung', [LoaiNguoiDungController::class, 'index']);
+route::post('/themloainguoidung', [LoaiNguoiDungController::class, 'store']);
+route::get('/chitietloainguoidung/{id}', [LoaiNguoiDungController::class, 'show']);
+route::put('/sualoainguoidung/{id}', [LoaiNguoiDungController::class, 'update']);
+route::delete('/xoaloainguoidung/{id}', [LoaiNguoiDungController::class, 'destroy']);
 Route::middleware('auth:sanctum')->group(function () {
     // người dùng
     Route::get('/nguoidung', [KhachHangController::class, 'index']);

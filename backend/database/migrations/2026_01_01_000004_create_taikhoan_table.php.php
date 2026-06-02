@@ -12,10 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('taikhoan', function (Blueprint $table) {
-            $table->char('tai_khoan_id',10)->primary();
+            $table->id('tai_khoan_id');
             $table->char('ten_dang_nhap',30)->nullable()->unique();
-            $table->char('mat_khau',30)->nullable();
+            $table->char('mat_khau',255)->nullable();
             $table->date('ngay_cap_nhat_lan_cuoi')->nullable();
+            $table->foreignId('loai_nguoi_dung')->references('loai_nguoi_dung_id')->on('loainguoidung');
             $table->timestamp('ngay_tao')->useCurrent();
         });
     }

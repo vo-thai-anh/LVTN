@@ -12,9 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('phieuxuat', function (Blueprint $table) {
-            $table->char('phieu_xuat_id',10)->primary();
-            $table->char('sach', 10);
-            $table->foreign('sach')->references('sach_id')->on('sach');
+            $table->id('phieu_xuat_id');
+            $table->foreignId('sach')->references('sach_id')->on('sach');
             $table->date('ngay_xuat')->nullable();
             $table->decimal('tong_tien',10,2)->nullable();
             $table->integer('so_luong')->nullable();

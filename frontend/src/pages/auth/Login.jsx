@@ -8,7 +8,7 @@ import '../../styles/design-system.css';
 import './Login.css';
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: '', mat_khau: '' });
+  const [formData, setFormData] = useState({ ten_dang_nhap: '', mat_khau: '' });
   const [loading,  setLoading]  = useState(false);
   const [showPass, setShowPass] = useState(false);
   const { login }   = useAuth();
@@ -19,35 +19,39 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.email || !formData.mat_khau) {
+    if (!formData.ten_dang_nhap || !formData.mat_khau) {
       toast.error('Vui lòng nhập đầy đủ thông tin'); return;
     }
     setLoading(true);
     try {
       const res = await axiosClient.post('/login', formData);
-      // axiosClient đã trả về response.data trực tiếp
-      if (res && res.success === false) { 
-        toast.error(res.message || 'Đăng nhập thất bại'); 
-        return; 
-      }
       
+      if (res && res.success === false) {
+        toast.error(res.message || 'Đăng nhập thất bại');
+        return;
+      }
       login(res.user, res.access_token);
       toast.success('Đăng nhập thành công! Chào mừng trở lại!');
-      
-      if (res.user.role === 'admin') {
+      const detail = res.user?.thong_tin_chi_tiet || {};
+      const rawRole = res.user?.role || res.user?.quyen || res.user?.loai_nguoi_dung || detail.loai_nguoi_dung || null;
+      const finalRole = rawRole ? String(rawRole).trim() : '';
+      console.log(res.user);
+      const isAdmin = ['2'].includes(finalRole);
+
+      if (isAdmin) {
         navigate('/admin');
       } else {
         navigate('/');
       }
     } catch (err) {
-      // err đã là dữ liệu từ error.response.data do interceptor xử lý
-      if (err.errors) {
-        toast.error(Object.values(err.errors)[0][0]);
-      } else {
-        toast.error(err.message || 'Đăng nhập thất bại');
-      }
-    } finally { setLoading(false); }
-  };
+        // err đã là dữ liệu từ error.response.data do interceptor xử lý
+        if (err.errors) {
+          toast.error(Object.values(err.errors)[0][0]);
+        } else {
+          toast.error(err.message || 'Đăng nhập thất bại');
+        }
+      } finally { setLoading(false); }
+    };
 
   return (
     <div className="auth-root ds-page">
@@ -64,16 +68,16 @@ const Login = () => {
 
           <div className="auth-body-compact">
             <form onSubmit={handleSubmit} id="login-form" className="auth-form-compact">
-              {/* Email */}
+              {/* Username */}
               <div className="ds-field-compact">
-                <label className="ds-label-compact" htmlFor="login-email">Email</label>
+                <label className="ds-label-compact" htmlFor="login-username">Tên đăng nhập</label>
                 <div className="ds-input-wrap">
                   <Mail size={14} className="ds-input-ico" />
                   <input
-                    id="login-email" type="email" name="email"
-                    placeholder="example@gmail.com"
-                    value={formData.email} onChange={handleChange}
-                    className="ds-input-refined" autoComplete="email" required
+                    id="login-username" type="text" name="ten_dang_nhap"
+                    placeholder="Tên đăng nhập"
+                    value={formData.ten_dang_nhap} onChange={handleChange}
+                    className="ds-input-refined" autoComplete="username" required
                   />
                 </div>
               </div>

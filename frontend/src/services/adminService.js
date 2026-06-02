@@ -9,7 +9,7 @@ const mapBook = (book = {}) => ({
   soLuong: book.so_luong_ton,
   loaiSach: {
     id: book.loai_sach,
-    tenLoai: book.loaisach?.ten_loai || ''
+    tenLoai: book.loai_sach?.ten_loai|| ''
   },
   moTa: book.mo_ta,
   trangThai: book.trang_thai,
@@ -72,7 +72,16 @@ export const AdminAPI = {
     };
   },
 
-  addBook: (data) => axios.post('/sach', buildBookPayload(data)),
+  addBook: (data) => {
+    // Nếu data là FormData (thêm sách có ảnh), gửi trực tiếp data và thêm headers
+    if (data instanceof FormData) {
+      return axios.post('/sach', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    // Ngược lại nếu là object bình thường thì giữ nguyên logic cũ
+    return axios.post('/sach', buildBookPayload(data));
+  },
   updateBook: (id, data) => axios.put(`/sach/${id}`, buildBookPayload(data)),
   deleteBook: (id) => axios.delete(`/sach/${id}`),
 

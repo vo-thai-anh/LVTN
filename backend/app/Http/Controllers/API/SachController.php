@@ -6,101 +6,109 @@ use App\Http\Controllers\API\Controller;
 use App\Models\Sach;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Cloudinary\Cloudinary;
 
 class SachController extends Controller
 {
-    public function index()
+    private function getCloudinaryInstance()
     {
-        $sachs = Sach::with('loaisach')->paginate(12);
+        $cloudinaryUrl = env('CLOUDINARY_URL');
+        if (!$cloudinaryUrl) {
+            throw new \Exception('Cấu hình CLOUDINARY_URL không tồn tại trong file .env');
+        }
+        return new Cloudinary($cloudinaryUrl);
+    }
+
+    private function getPublicIdFromUrl($url)
+    {
+        if (empty($url)) return null;
+            $parts = explode('/api_uploads/', $url);
+        if (count($parts) < 2) return null;
+            $filename = 'api_uploads/' . explode('.', $parts[1])[0];
+        return $filename;
+    }
+
+    public function index(Request $request)
+    {
+        $search = $request->input('search');
+        $perPage = $request->input('size', 8);
+        $query = Sach::with('loaiSach');
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('ten_sach', 'LIKE', '%' . $search . '%')
+                    ->orWhere('tac_gia', 'LIKE', '%' . $search . '%');
+            });
+        }
+
+        $sachs = $query->orderBy('sach_id', 'desc')->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'data'    => $sachs
         ]);
     }
+    /**
+     * THÊM SÁCH MỚI: ID SỐ TỰ TĂNG + TIMESTAMPS TỰ ĐỘNG + UPLOAD CLOUDINARY
+     */
     public function store(Request $request)
     {
         $validatedData = $request->validate([
             'ten_sach'     => 'required|string|max:255',
             'tac_gia'      => 'required|string|max:255',
             'gia'          => 'required|numeric|min:0',
-            'so_luong'     => 'required|integer|min:0',
-            'loai_sach_id' => 'required|exists:loaisach,loai_sach_id',
-            'anh_bia'      => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'so_luong_ton' => 'required|integer|min:0',
+            'loai_sach'    => 'nullable|integer',
+            'nha_xuat_ban' => 'nullable|string|max:255',
             'mo_ta'        => 'nullable|string',
+            'trang_thai'   => 'required|integer|in:0,1',
+            'trong_luong'  => 'nullable|integer|min:0',
+            'so_trang'     => 'nullable|integer|min:0',
+            'kich_thuoc'   => 'nullable|string|max:100',
+            'nha_cung_cap' => 'nullable|string|max:255',
+            'anh_bia'      => 'nullable|string'
         ]);
-
-        $validatedData['loai_sach'] = $validatedData['loai_sach_id'];
-        unset($validatedData['loai_sach_id']);
-
         try {
-                if ($request->hasFile('anh_bia')) {
-                $path = $request->file('anh_bia')->store('books', 'public');
-                $validatedData['anh_bia'] = asset('storage/' . $path);
-                $file = $request->file('anh_bia');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('assets/product'), $fileName);
-                $validatedData['anh_bia'] = 'assets/product/' . $fileName;
-            }
+            // --- BƯỚC 1: KHỞI TẠO SÁCH VỚI ẢNH BÌA RỖNG ---
             $sach = new Sach($validatedData);
-            $sach->sach_id = strtoupper(Str::random(10));
+            $sach->anh_bia = ''; // Gán ảnh bìa trống lúc ban đầu
             $sach->save();
+            // --- BƯỚC 2: KIỂM TRA VÀ UPLOAD FILE LÊN CLOUDINARY ---
+            if ($request->hasFile('anh_bia_file')) {
+                $file = $request->file('anh_bia_file');
+                $cloudinary = $this->getCloudinaryInstance();
+                // Lúc này $sach->sach_id đã có giá trị là số tự tăng từ DB (Ví dụ: 15, 16...)
+                $publicId =  $sach->sach_id;
+                // Thực hiện đẩy file vào thư mục 'api_uploads' trên Cloudinary
+                $result = $cloudinary->uploadApi()->upload($file->getRealPath(), [
+                    'folder' => 'api_uploads',
+                    'public_id' => $publicId,
+                    'resource_type' => 'auto',
+                ]);
+                print_r($result);
+                // --- BƯỚC 3: LẤY LINK ẢNH VÀ CẬP NHẬT NGƯỢC LẠI ---
+                if (isset($result['secure_url'])) {
+                    $sach->anh_bia = $result['secure_url'];
+                    $sach->save();
+                }
+            }
             return response()->json([
                 'success' => true,
-                'message' => 'Thêm sách thành công',
+                'message' => 'Thêm sách mới và đồng bộ ảnh lên Cloudinary thành công!',
                 'data' => $sach
             ], 201);
-
         } catch (\Exception $e) {
-
+            if (isset($sach) && $sach->exists && empty($sach->anh_bia) && $request->hasFile('anh_bia_file')) {
+                $sach->delete();
+            }
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Lỗi thêm sách: ' . $e->getMessage()
             ], 500);
-
         }
-    }
-    public function filter(Request $request)
-    {
-        $query = Sach::with('loaisach');
-        if ($request->has('loai_sach_id') && $request->loai_sach_id != '') {
-            $query->where('loai_sach_id', $request->loai_sach_id);
-        }
-        if ($request->has('nha_xuat_ban') && $request->nha_xuat_ban != '') {
-            $query->where('nha_xuat_ban', 'LIKE', '%' . $request->nha_xuat_ban . '%');
-        }
-        if ($request->has('gia_min') && $request->gia_min != '') {
-            $query->where('gia', '>=', $request->gia_min);
-        }
-        if ($request->has('gia_max') && $request->gia_max != '') {
-            $query->where('gia', '<=', $request->gia_max);
-        }
-        if ($request->has('sort_by') && $request->sort_by != '') {
-            switch ($request->sort_by) {
-                case 'gia_tang':
-                    $query->orderBy('gia', 'asc');
-                    break;
-                case 'gia_giam':
-                    $query->orderBy('gia', 'desc');
-                    break;
-                case 'moi_nhat':
-                    $query->orderBy('id', 'desc');
-                    break;
-            }
-        } else {
-            $query->orderBy('id', 'desc');
-        }
-
-        $sachs = $query->paginate(12);
-
-        return response()->json([
-            'success' => true,
-            'data'    => $sachs
-        ]);
     }
     public function show($id)
     {
-        $sach = Sach::with('loaisach')->findOrFail($id);
+        $sach = Sach::with('loaiSach')->findOrFail($id);
         return response()->json([
             'success' => true,
             'data'    => $sach
@@ -109,66 +117,124 @@ class SachController extends Controller
     public function update(Request $request, $id)
     {
         $sach = Sach::findOrFail($id);
+
         $validatedData = $request->validate([
             'ten_sach'     => 'sometimes|required|string|max:255',
             'tac_gia'      => 'sometimes|required|string|max:255',
             'gia'          => 'sometimes|required|numeric|min:0',
-            'so_luong'     => 'sometimes|required|integer|min:0',
-            'loai_sach_id' => 'sometimes|required|exists:loaisach,loai_sach_id',
-            'anh_bia'      => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'so_luong_ton' => 'sometimes|required|integer|min:0',
+            'loai_sach'    => 'sometimes|required|integer',
+            'nha_xuat_ban' => 'nullable|string|max:255',
             'mo_ta'        => 'nullable|string',
+            'trang_thai'   => 'sometimes|required|integer|in:0,1',
+            'trong_luong'  => 'nullable|integer|min:0',
+            'so_trang'     => 'nullable|integer|min:0',
+            'kich_thuoc'   => 'nullable|string|max:100',
+            'nha_cung_cap' => 'nullable|string|max:255',
+            'anh_bia'      => 'nullable|string'
         ]);
 
-        if (isset($validatedData['loai_sach_id'])) {
-            $validatedData['loai_sach'] = $validatedData['loai_sach_id'];
-            unset($validatedData['loai_sach_id']);
-        }
+        try {
+            if ($request->hasFile('anh_bia_file')) {
+                $file = $request->file('anh_bia_file');
+                $cloudinary = $this->getCloudinaryInstance();
 
-        if ($request->hasFile('anh_bia')) {
-            $path = $request->file('anh_bia')->store('books', 'public');
-            $validatedData['anh_bia'] = asset('storage/' . $path);
-            $file = $request->file('anh_bia');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('assets/product'), $fileName);
-            $validatedData['anh_bia'] = 'assets/product/' . $fileName;
-        }
+                // 1. DỌN DẸP: Tìm và xóa ảnh cũ trên Cloudinary để đỡ tốn tài nguyên dung lượng Cloud
+                $oldPublicId = $this->getPublicIdFromUrl($sach->anh_bia);
+                if ($oldPublicId) {
+                    $cloudinary->uploadApi()->destroy($oldPublicId);
+                }
 
-        $sach->update($validatedData);
-        return response()->json([
-            'success' => true,
-            'message' => 'Cập nhật sách thành công',
-            'data' => $sach
-        ]);
+                // 2. UPLOAD ẢNH MỚI
+                $result = $cloudinary->uploadApi()->upload($file->getRealPath(), [
+                    'folder' => 'api_uploads',
+                    'resource_type' => 'auto',
+                ]);
+
+                if (isset($result['secure_url'])) {
+                    $validatedData['anh_bia'] = $result['secure_url'];
+                }
+            }
+
+            $sach->update($validatedData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật thông tin và thay đổi ảnh trên Cloudinary thành công!',
+                'data' => $sach
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi cập nhật: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
+    /**
+     * XÓA SÁCH + XÓA HOÀN TOÀN ẢNH KHỎI CLOUDINARY
+     */
     public function destroy($id)
     {
         $sach = Sach::findOrFail($id);
-        $sach->delete();
-        return response()->json([
-            'success' => true,
-            'message' => 'Xóa sách thành công'
-        ]);
+
+        try {
+            // Xóa ảnh đính kèm trên hệ thống Cloudinary trước
+            $publicId = $this->getPublicIdFromUrl($sach->anh_bia);
+            if ($publicId) {
+                $cloudinary = $this->getCloudinaryInstance();
+                $cloudinary->uploadApi()->destroy($publicId);
+            }
+
+            // Sau đó tiến hành xóa thông tin bản ghi sách dưới DB
+            $sach->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã xóa sản phẩm và giải phóng ảnh trên Cloudinary thành công!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể xóa sản phẩm do ràng buộc dữ liệu: ' . $e->getMessage()
+            ], 409);
+        }
     }
 
-    public function search(Request $request)
+    /**
+     * Bộ lọc dữ liệu Client (Tìm kiếm, Giá, Thể loại)
+     */
+    public function filter(Request $request)
     {
-        $query = Sach::with('loaisach');
+        $query = Sach::with('loaiSach');
 
-        if ($request->filled('search')) {
+        if ($request->filled('loai_sach_id')) {
+            $query->where('loai_sach', $request->loai_sach_id);
+        }
+        if ($request->filled('nha_xuat_ban')) {
+            $query->where('nha_xuat_ban', 'LIKE', '%' . $request->nha_xuat_ban . '%');
+        }
+        if ($request->filled('gia_min')) {
+            $query->where('gia', '>=', $request->gia_min);
+        }
+        if ($request->filled('gia_max')) {
+            $query->where('gia', '<=', $request->gia_max);
+        }
 
-            $keyword = strtolower($request->search);
-
-            $query->whereRaw("
-                LOWER(REPLACE(unaccent(ten_sach), ' ', ''))
-                ILIKE
-                LOWER(REPLACE(unaccent(?), ' ', ''))
-            ", ["%$keyword%"]);
+        if ($request->filled('sort_by')) {
+            switch ($request->sort_by) {
+                case 'gia_tang': $query->orderBy('gia', 'asc'); break;
+                case 'gia_giam': $query->orderBy('gia', 'desc'); break;
+                case 'moi_nhat': default: $query->orderBy('sach_id', 'desc'); break;
+            }
+        } else {
+            $query->orderBy('sach_id', 'desc');
         }
 
         return response()->json([
             'success' => true,
-            'data' => $query->paginate(12)
+            'data'    => $query->paginate(12)
         ]);
     }
 }

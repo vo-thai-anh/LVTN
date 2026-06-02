@@ -8,13 +8,13 @@ class PhieuNhap extends Model
 {
     protected $table = 'phieunhap';
     protected $primaryKey = 'phieu_nhap_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
         'ngay_nhap',
         'tong_tien',
         'so_luong'
     ];
-    public $incrementing = false;
+    public $incrementing = true;
     public $timestamps = false;
 
     public function Sach()

@@ -8,12 +8,12 @@ class PhuongThucThanhToan extends Model
 {
     protected $table = 'phuongthucthanhtoan';
     protected $primaryKey = 'phuong_thuc_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
         'ten',
         'mo_ta',
         'trang_thai'
     ];
-    public $incrementing = false;
+    public $incrementing = true;
     public $timestamps = false;
 }

@@ -8,10 +8,10 @@ class LoaiNguoiDung extends Model
 {
     protected $table = 'loainguoidung';
     protected $primaryKey = 'loai_nguoi_dung_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
         'ten',
     ];
-    public $incrementing = false;
+    public $incrementing = true;
     public $timestamps = false;
 }

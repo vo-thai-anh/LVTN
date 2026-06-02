@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\API\Controller;
+use App\Http\Controllers\API\Controller ;
 use App\Models\GioHang;
 use App\Models\GioHangItem;
 use App\Models\Sach;
@@ -13,114 +13,114 @@ class GioHang_ItemController extends Controller
     public function themVaoGio(Request $request)
     {
         $request->validate([
-            'sach_id'  => 'required|exists:sach,id',
+            'sach_id'  => 'required|exists:sach,sach_id',
             'so_luong' => 'required|integer|min:1'
         ]);
-        $userId = $request->user()->id;
+        // Đồng bộ định danh theo thực thể Khách Hàng
+        $khachHangId = $request->user()->khach_hang_id ?? $request->user()->id;
         $sachId = $request->sach_id;
         $soLuongThem = $request->so_luong;
         $sach = Sach::findOrFail($sachId);
-        $giohang = GioHang::firstOrCreate(['nguoi_dung_id' => $userId]);
-        $chiTiet = GioHangItem::where('gio_hang_id', $giohang->id)
-                                ->where('sach_id', $sachId)
+        // Tìm giỏ hàng hiện tại hoặc tự tạo mới nếu chưa từng có giỏ hàng
+        $giohang = GioHang::firstOrCreate(['khach_hang_id' => $khachHangId]);
+        // Kiểm tra xem cuốn sách này đã nằm trong giỏ hàng trước đó chưa
+        $chiTiet = GioHangItem::where('gio_hang', $giohang->gio_hang_id)
+                                ->where('sach', $sachId)
                                 ->first();
-
         if ($chiTiet) {
             $soLuongMoi = $chiTiet->so_luong + $soLuongThem;
-            if ($soLuongMoi > $sach->so_luong) {
+            // Kiểm tra hàng tồn kho
+            if ($soLuongMoi > $sach->so_luong_ton) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Số lượng vượt quá hàng tồn kho! (Chỉ còn ' . $sach->so_luong . ' cuốn)'
+                    'message' => 'Số lượng vượt quá hàng tồn kho! (Kho còn lại ' . $sach->so_luong_ton . ' cuốn)'
                 ], 400);
             }
             $chiTiet->update([
                 'so_luong'   => $soLuongMoi,
                 'thanh_tien' => $soLuongMoi * $chiTiet->don_gia
             ]);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Đã cập nhật số lượng sách trong giỏ!',
                 'data'    => $chiTiet
             ]);
-
         } else {
-            if ($soLuongThem > $sach->so_luong) {
+            // Kiểm tra hàng tồn kho khi thêm mới vào giỏ
+            if ($soLuongThem > $sach->so_luong_ton) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Số lượng yêu cầu vượt quá hàng tồn kho! (Chỉ còn ' . $sach->so_luong . ' cuốn)'
+                    'message' => 'Số lượng yêu cầu vượt quá hàng tồn kho! (Kho còn lại ' . $sach->so_luong_ton . ' cuốn)'
                 ], 400);
             }
-
-            $chiTiet = GioHangItem::create([
-                'gio_hang_id' => $giohang->id,
-                'sach_id'     => $sachId,
-                'so_luong'    => $soLuongThem,
-                'don_gia'     => $sach->gia,
-                'thanh_tien'  => $soLuongThem * $sach->gia
-            ]);
+            $chiTiet = new GioHangItem();
+            $chiTiet->gio_hang   = $giohang->gio_hang_id;
+            $chiTiet->sach       = $sachId;
+            $chiTiet->so_luong   = $soLuongThem;
+            $chiTiet->don_gia    = $sach->gia;
+            $chiTiet->thanh_tien = $soLuongThem * $sach->gia;
+            $chiTiet->save();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Đã thêm sách mới vào giỏ hàng!',
+                'message' => 'Đã thêm sản phẩm sách vào giỏ hàng thành công!',
                 'data'    => $chiTiet
             ]);
         }
     }
+
     public function capNhatSoLuong(Request $request, $sach_id)
     {
         $request->validate([
             'so_luong' => 'required|integer|min:1'
         ]);
-        $userId = $request->user()->id;
+        $khachHangId = $request->user()->khach_hang_id ?? $request->user()->id;
         $soLuongMoi = $request->so_luong;
-        $giohang = GioHang::where('nguoi_dung_id', $userId)->first();
+        $giohang = GioHang::where('khach_hang_id', $khachHangId)->first();
         if (!$giohang) {
-            return response()->json(['success' => false, 'message' => 'Không tìm thấy giỏ hàng'], 404);
+            return response()->json(['success' => false, 'message' => 'Hệ thống không tìm thấy giỏ hàng của bạn.'], 404);
         }
-        $chiTiet = GioHangItem::where('gio_hang_id', $giohang->id)
-                                ->where('sach_id', $sach_id)
+        $chiTiet = GioHangItem::where('gio_hang', $giohang->gio_hang_id)
+                                ->where('sach', $sach_id)
                                 ->first();
-
         if (!$chiTiet) {
-            return response()->json(['success' => false, 'message' => 'Sách này không có trong giỏ hàng'], 404);
+            return response()->json(['success' => false, 'message' => 'Sản phẩm sách này không tồn tại bên trong giỏ.'], 404);
         }
         $sach = Sach::findOrFail($sach_id);
-        if ($soLuongMoi > $sach->so_luong) {
+        if ($soLuongMoi > $sach->so_luong_ton) {
             return response()->json([
                 'success' => false,
-                'message' => 'Số lượng vượt quá hàng tồn kho! (Chỉ còn ' . $sach->so_luong . ' cuốn)'
+                'message' => 'Số lượng vượt quá giới hạn hàng tồn kho! (Còn lại: ' . $sach->so_luong_ton . ')'
             ], 400);
         }
         $chiTiet->update([
             'so_luong'   => $soLuongMoi,
             'thanh_tien' => $soLuongMoi * $chiTiet->don_gia
         ]);
-
         return response()->json([
             'success' => true,
-            'message' => 'Đã cập nhật số lượng',
+            'message' => 'Thay đổi số lượng mặt hàng thành công.',
             'data'    => $chiTiet
         ]);
     }
+
     public function xoaChiTiet(Request $request, $sach_id)
     {
-        $userId = $request->user()->id;
-
-        $giohang = GioHang::where('nguoi_dung_id', $userId)->first();
+        $khachHangId = $request->user()->khach_hang_id ?? $request->user()->id;
+        $giohang = GioHang::where('khach_hang_id', $khachHangId)->first();
         if (!$giohang) {
-            return response()->json(['success' => false, 'message' => 'Không tìm thấy giỏ hàng'], 404);
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy thông tin giỏ hàng.'], 404);
         }
-        $chiTiet = GioHangItem::where('gio_hang_id', $giohang->id)
-                                ->where('sach_id', $sach_id)
+        $chiTiet = GioHangItem::where('gio_hang', $giohang->gio_hang_id)
+                                ->where('sach', $sach_id)
                                 ->first();
         if ($chiTiet) {
             $chiTiet->delete();
             return response()->json([
                 'success' => true,
-                'message' => 'Đã xóa sách khỏi giỏ hàng'
+                'message' => 'Đã loại bỏ sản phẩm sách ra khỏi giỏ hàng.'
             ]);
         }
-        return response()->json(['success' => false, 'message' => 'Sách không tồn tại trong giỏ'], 404);
+        return response()->json(['success' => false, 'message' => 'Mặt hàng này không tồn tại trong giỏ.'], 404);
     }
 }

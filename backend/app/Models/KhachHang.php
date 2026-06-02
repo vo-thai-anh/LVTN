@@ -8,7 +8,7 @@ class KhachHang extends Model
 {
     protected $table = 'khachhang';
     protected $primaryKey = 'khach_hang_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
         'ten_khach_hang',
         'so_dien_thoai',
@@ -19,7 +19,7 @@ class KhachHang extends Model
         'nam_sinh',
         'ngay_tao',
     ];
-    public $incrementing = false;
+    public $incrementing = true;
     public $timestamps = false;
 
     public function taiKhoan()

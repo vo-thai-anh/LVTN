@@ -9,13 +9,19 @@ class TaiKhoan extends Model
     use HasApiTokens;
     protected $table = 'taikhoan';
     protected $primaryKey = 'tai_khoan_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
         'ten_dang_nhap',
         'mat_khau',
         'ngay_cap_nhat_lan_cuoi',
-        'ngay_tao'
+        'ngay_tao',
+        'loai_nguoi_dung'
+
     ];
-    public $incrementing = false;
+        public function loaiNguoiDung()
+    {
+        return $this->belongsTo(LoaiNguoiDung::class, 'loai_nguoi_dung', 'loai_nguoi_dung_id');
+    }
+    public $incrementing = true;
     public $timestamps = false;
 }

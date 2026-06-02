@@ -6,6 +6,7 @@ import {
   Bell, Search, User, ExternalLink
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useAuth } from '../../contexts/AuthContext';
 import './AdminLayout.css';
 
 const NavGroup = ({ title, children, isCollapsed }) => (
@@ -26,12 +27,13 @@ const NavGroup = ({ title, children, isCollapsed }) => (
 );
 
 const AdminLayout = () => {
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
+    logout();
     navigate('/login');
   };
 

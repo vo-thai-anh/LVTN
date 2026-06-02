@@ -8,11 +8,12 @@ class GioHang extends Model
 {
     protected $table = 'giohang';
     protected $primaryKey = 'gio_hang_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
+        'khach_hang_id',
         'ngay_tao'
     ];
-    public $incrementing = false;
+    public $incrementing = true;
     public $timestamps = false;
     public function khachhang()
     {

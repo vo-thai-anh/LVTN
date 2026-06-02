@@ -12,10 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('giohang', function (Blueprint $table) {
-            $table->char('gio_hang_id',10)->primary();
+            $table->id('gio_hang_id');
             $table->timestamp('ngay_tao')->useCurrent();
-            $table->char('khach_hang_id', 10);
-            $table->foreign('khach_hang_id')->references('khach_hang_id')->on('khachhang');
+            $table->foreignId('khach_hang_id')->references('khach_hang_id')->on('khachhang');
         });
     }
 

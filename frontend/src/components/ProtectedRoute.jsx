@@ -24,7 +24,10 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   }
 
   // 2. Kiểm tra quyền Admin (nếu có yêu cầu)
-  if (adminOnly && user.role !== 'admin') {
+  const isAdmin = ['2'].includes(
+    user?.role || user?.quyen || user?.loai_nguoi_dung || user?.thong_tin_chi_tiet?.loai_nguoi_dung
+  );
+  if (adminOnly && !isAdmin) {
     return <Navigate to="/" replace />;
   }
 

@@ -50,6 +50,7 @@ const MainLayout = ({ children }) => {
     </div>
   );
 };
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   return (
@@ -72,15 +73,14 @@ const AnimatedRoutes = () => {
         <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />
         
         {/* Protected Admin Routes */}
-        <Route 
-          path="/admin/*" 
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <AdminApp />
-            </ProtectedRoute>
-          } 
-        />
-        
+        <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <AdminApp />
+              </ProtectedRoute>
+            }
+          />
         <Route path="*" element={<PageWrapper><Home /></PageWrapper>} />
       </Routes>
     </AnimatePresence>

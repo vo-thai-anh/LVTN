@@ -8,7 +8,7 @@ class Sach extends Model
 {
     protected $table = 'sach';
     protected $primaryKey = 'sach_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
         'ten_sach',
         'tac_gia',
@@ -25,7 +25,7 @@ class Sach extends Model
         'trang_thai',
         'loai_sach'
     ];
-    public $incrementing = false;
+    public $incrementing = true;
     public $timestamps = false;
 
     public function loaiSach()

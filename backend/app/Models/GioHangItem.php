@@ -8,13 +8,13 @@ class GioHangItem extends Model
 {
     protected $table = 'giohangitem';
     protected $primaryKey = 'gio_hang_item_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
         'so_luong',
         'don_gia',
         'thanh_tien',
     ];
-    public $incrementing = false;
+    public $incrementing = true;
     public $timestamps = false;
 
     public function Sach()

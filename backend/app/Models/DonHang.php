@@ -8,7 +8,7 @@ class DonHang extends Model
 {
     protected $table = 'donhang';
     protected $primaryKey = 'don_hang_id';
-    protected $keyType = 'string';
+    protected $keyType = 'int';
     protected $fillable = [
         'ngay_tao',
         'thanh_tien',
