@@ -5,21 +5,14 @@ export const getImageUrl = (path) => {
   // Chuẩn hóa đường dẫn: Đổi tất cả dấu gạch chéo ngược (\) thành gạch chéo xuôi (/)
   const normalizedPath = path.replace(/\\/g, '/');
 
-  // Nếu là URL tuyệt đối (http...), blob hoặc đường dẫn cục bộ bắt đầu bằng /
+  // Nếu là URL tuyệt đối từ Cloudinary (http/https), blob hoặc link gốc, giữ nguyên nguyên vẹn
   if (normalizedPath.startsWith('http') || normalizedPath.startsWith('blob:') || normalizedPath.startsWith('/')) {
     return normalizedPath;
   }
 
-  // Lấy Base URL của User Backend (nhom1be.onrender.com)
-  const apiBase = import.meta.env.VITE_API_USER_URL || import.meta.env.VITE_USER_API_URL || 'http://localhost:8000/api';
-  
-  // Loại bỏ hậu tố /api để lấy domain gốc
+  // Phương án dự phòng nếu sau này có ảnh mẫu cục bộ lưu ở Backend Laravel
+  const apiBase = import.meta.env.VITE_API_USER_URL || 'http://localhost:8000/api';
   const rootDomain = apiBase.replace(/\/api$/, '');
-
-  // Xử lý logic đường dẫn tương đương với Laravel
-  if (normalizedPath.startsWith('assets/')) {
-    return `${rootDomain}/${normalizedPath}`;
-  }
   
-  return `${rootDomain}/assets/product/${normalizedPath}`;
+  return `${rootDomain}/storage/${normalizedPath}`;
 };

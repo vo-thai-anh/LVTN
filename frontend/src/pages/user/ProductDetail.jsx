@@ -15,7 +15,6 @@ import { getImageUrl } from '../../utils';
 import './ProductDetail.css';
 
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(n || 0) + '₫';
-// Đã chuyển logic sang src/utils/urlHelper.js
 
 /* ══════════════ Skeleton ══════════════ */
 const Skeleton = () => (
@@ -50,12 +49,8 @@ const ErrorUI = ({ onRetry }) => (
     <div className="pd3-wrap">
       <div className="pd3-error-wrap">
         <AlertCircle size={52} color="#e53e3e" className="pd3-error-icon" />
-        <h2 className="pd3-error-title">
-          Không tìm thấy sản phẩm
-        </h2>
-        <p className="pd3-error-sub">
-          Sản phẩm có thể đã bị xóa hoặc đường dẫn không đúng.
-        </p>
+        <h2 className="pd3-error-title">Không tìm thấy sản phẩm</h2>
+        <p className="pd3-error-sub">Sản phẩm có thể đã bị xóa hoặc đường dẫn không đúng.</p>
         <div className="pd3-error-actions">
           <Link to="/category" className="pd3-btn-outline">
             <BookOpen size={15} /> Xem sản phẩm khác
@@ -69,28 +64,27 @@ const ErrorUI = ({ onRetry }) => (
   </div>
 );
 
-/* ══════════════ Related card ══════════════ */
+/* ══════════════ Related Card ══════════════ */
 const RelCard = ({ sach }) => (
-  <Link to={`/product/${sach.id}`} className="pd3-rel-card">
+  <Link to={`/product/${sach.sach_id}`} className="pd3-rel-card">
     <div className="pd3-rel-img">
       <img
-        src={getImageUrl(sach.anh_bia)}
-        alt={sach.ten_sach} loading="lazy"
+        src={getImageUrl(sach.anh_bia)} 
+        alt={sach.ten_sach} 
+        loading="lazy"
         onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x600/e2e8f0/475569?text=Chua+co+anh'; }}
       />
-      {sach.so_luong <= 0 && <span className="pd3-oos-badge">Hết hàng</span>}
+      {Number(sach.so_luong_ton) <= 0 && <span className="pd3-oos-badge">Hết hàng</span>}
     </div>
     <div className="pd3-rel-body">
       <p className="pd3-rel-name">{sach.ten_sach}</p>
       {sach.tac_gia && <p className="pd3-rel-author">{sach.tac_gia}</p>}
-      <p className="pd3-rel-price">{fmt(sach.gia_ban || sach.gia)}</p>
+      <p className="pd3-rel-price">{fmt(sach.gia)}</p>
     </div>
   </Link>
 );
 
-/* ══════════════════════════════════════════
-   PRODUCT DETAIL PAGE
-══════════════════════════════════════════ */
+/* ══════════════ Main Component ══════════════ */
 const ProductDetail = () => {
   const { id }        = useParams();
   const navigate      = useNavigate();
@@ -106,23 +100,20 @@ const ProductDetail = () => {
   const [related, setRel]    = useState([]);
   const [loadRel, setLoadRel]= useState(false);
 
-  /* ── Fetch sách ── */
   const fetchBook = useCallback(async () => {
     setLoad(true); setError(false);
     try {
       const res = await bookAPI.getDetail(id);
-      
       if (res.success && res.data) {
-        const data = res.data; // Đã được mapSafeBook ở service
+        const data = res.data;
         setBook(data);
-
         if (data.loai_sach_id) {
           setLoadRel(true);
           bookAPI.getFiltered({ loai_sach_id: data.loai_sach_id, size: 6 })
             .then(r => {
               if (r.success) {
                 const list = r.data || [];
-                setRel(list.filter(b => b.id !== data.id).slice(0, 5));
+                setRel(list.filter(b => b.sach_id !== data.sach_id).slice(0, 5));
               }
             })
             .catch(() => {})
@@ -131,57 +122,86 @@ const ProductDetail = () => {
       } else {
         setError(true);
       }
-    } catch { 
-      setError(true); 
-    } finally { 
-      setLoad(false); 
+    } catch {
+      setError(true);
+    } finally {
+      setLoad(false);
     }
   }, [id]);
 
   useEffect(() => { fetchBook(); setQty(1); }, [fetchBook]);
 
-  const needLogin = () => { toast.error('Vui lòng đăng nhập để tiếp tục'); navigate('/login'); };
-
-  /* ── Thêm vào giỏ ── */
-  const handleAdd = async () => {
-    if (!user) return needLogin();
-    if (qty > book.so_luong) { toast.error(`Chỉ còn ${book.so_luong} sản phẩm trong kho`); return; }
-    setAdding(true);
-    try {
-      const res = await cartAPI.addToCart({ sach_id: book.id, so_luong: qty });
-      
-      if (res?.success) { 
-        toast.success(res.message || 'Đã thêm vào giỏ hàng'); 
-        fetchCart(); 
-      } else {
-        toast.error(res?.message || 'Có lỗi khi thêm vào giỏ');
-      }
-    } catch (e) { 
-      console.error('Cart Error Detail:', e.response?.data || e.message);
-      toast.error(e.response?.data?.message || 'Không thể kết nối Server giỏ hàng'); 
-    }
-    finally { setAdding(false); }
+  const needLogin = () => { 
+    toast.error('Vui lòng đăng nhập để thực hiện chức năng này'); 
+    navigate('/login'); 
   };
 
-  /* ── Mua ngay ── */
+  /* ── Thêm vào giỏ (Đã sửa lỗi an toàn tránh crash UI và map đúng id) ── */
+  const handleAdd = async () => {
+    if (!user) return needLogin(); // Chặn ngay từ đầu nếu chưa đăng nhập tránh lỗi 401
+    if (!book) return;
+
+    setAdding(true);
+    try {
+      console.log(">>> [DEBUG ADD TO CART] Đang gửi sách có ID:", book.sach_id);
+      
+      const response = await cartAPI.addToCart({
+        sach_id: book.sach_id,
+        so_luong: qty || 1
+      });
+
+      if (response && response.success) {
+        toast.success("Thêm vào giỏ hàng thành công!");
+        if (fetchCart) await fetchCart(); // Cập nhật lại số lượng badge trên Header
+      } else {
+        toast.error(response?.message || "Không thể thêm vào giỏ hàng.");
+      }
+    } catch (error) {
+      console.error("❌ [DEBUG ADD TO CART ERROR]:", error);
+      
+      // Khắc phục an toàn: Kiểm tra sự tồn tại của error.response trước khi đọc .data
+      if (error.response && error.response.status === 401) {
+        needLogin();
+      } else if (error.response && error.response.data) {
+        toast.error(error.response.data.message || "Lỗi thêm vào giỏ hàng");
+      } else {
+        toast.error(error.message || "Không thể kết nối đến máy chủ, vui lòng thử lại!");
+      }
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  /* ── Mua ngay (Đã đồng bộ hóa đồng nhất với handleAdd) ── */
   const handleBuy = async () => {
     if (!user) return needLogin();
+    if (!book) return;
+    
     setBuying(true);
     try {
-      const res = await cartAPI.addToCart({ sach_id: book.id, so_luong: qty });
-      if (res?.success) { 
-        await fetchCart(); 
-        navigate('/checkout'); 
+      const res = await cartAPI.addToCart({ 
+        sach_id: book.sach_id, // Đồng bộ trường sach_id nhất quán với BE
+        so_luong: qty 
+      });
+      
+      if (res && res.success) {
+        if (fetchCart) await fetchCart();
+        navigate('/checkout');
+      } else { 
+        toast.error(res?.message || 'Có lỗi xảy ra khi xử lý đặt hàng'); 
       }
-      else { toast.error(res?.message || 'Có lỗi xảy ra'); setBuying(false); }
-    } catch (e) { toast.error(e.response?.data?.message || 'Không thể thêm vào giỏ hàng'); setBuying(false); }
+    } catch (e) { 
+      toast.error(e.response?.data?.message || 'Không thể tiến hành mua ngay sản phẩm này'); 
+    } finally {
+      setBuying(false);
+    }
   };
 
   if (loading) return <Skeleton />;
   if (error || !book) return <ErrorUI onRetry={fetchBook} />;
 
   const isNgungBan  = Number(book.trang_thai) === 0;
-  const oos         = book.so_luong <= 0 || isNgungBan;
+  const oos         = Number(book.so_luong_ton) <= 0 || isNgungBan;
   const price       = book.gia_ban || book.gia || 0;
   const hasDisc     = book.gia_ban && book.gia && book.gia_ban < book.gia;
 
@@ -216,16 +236,12 @@ const ProductDetail = () => {
 
             {/* ── Cột phải: info ── */}
             <div className="pd3-info-col">
-
-              {/* Badge thể loại */}
               {book.loaisach?.ten_loai && (
                 <span className="pd3-badge">{book.loaisach.ten_loai}</span>
               )}
 
-              {/* Tên sách */}
               <h1 className="pd3-title">{book.ten_sach}</h1>
 
-              {/* Tác giả / NXB */}
               <div className="pd3-meta">
                 {book.tac_gia && (
                   <span>Tác giả: <strong>{book.tac_gia}</strong></span>
@@ -238,23 +254,20 @@ const ProductDetail = () => {
 
               <div className="pd3-hline" />
 
-              {/* Giá */}
               <div className="pd3-price-row">
                 <span className="pd3-price">{fmt(price)}</span>
                 {hasDisc && <span className="pd3-price-old">{fmt(book.gia)}</span>}
               </div>
 
-              {/* Tình trạng kho */}
               <div className={`pd3-stock${oos ? ' oos' : ''}`}>
                 {isNgungBan 
                   ? <><AlertCircle size={13} /> Sản phẩm ngưng bán</>
                   : oos
                     ? <><AlertCircle size={13} /> Hết hàng</>
-                    : <><CheckCircle2 size={13} /> Còn hàng <em>({book.so_luong} cuốn)</em></>
+                    : <><CheckCircle2 size={13} /> Còn hàng <em>({book.so_luong_ton} cuốn)</em></>
                 }
               </div>
 
-              {/* Thông số nhanh inline */}
               {(book.so_trang || book.trong_luong || book.kich_thuoc) && (
                 <div className="pd3-quick-specs">
                   {book.so_trang  && <span><Hash size={12}/> {book.so_trang} trang</span>}
@@ -262,10 +275,8 @@ const ProductDetail = () => {
                   {book.trong_luong && <span><Scale size={12}/> {book.trong_luong}g</span>}
                 </div>
               )}
-
               <div className="pd3-hline" />
-
-              {/* Quantity */}
+              
               {!oos && (
                 <div className="pd3-qty-row">
                   <span className="pd3-qty-label">Số lượng</span>
@@ -275,13 +286,12 @@ const ProductDetail = () => {
                       disabled={qty <= 1}><Minus size={13} /></button>
                     <span className="pd3-qty-num">{qty}</span>
                     <button className="pd3-qty-btn"
-                      onClick={() => setQty(q => Math.min(book.so_luong, q + 1))}
-                      disabled={qty >= book.so_luong}><Plus size={13} /></button>
+                      onClick={() => setQty(q => Math.min(book.so_luong_ton, q + 1))}
+                      disabled={qty >= book.so_luong_ton}><Plus size={13} /></button>
                   </div>
                 </div>
               )}
 
-              {/* Action buttons */}
               <div className="pd3-actions">
                 <button
                   id="add-to-cart-btn"
@@ -309,8 +319,6 @@ const ProductDetail = () => {
 
         {/* ════════════ CARD 2: Thông số + Mô tả ════════════ */}
         <div className="pd3-detail-card">
-
-          {/* Bảng thông số */}
           {(book.so_trang || book.trong_luong || book.kich_thuoc || book.loaisach || book.tac_gia || book.nha_xuat_ban) && (
             <div className="pd3-specs-wrap">
               <h2 className="pd3-section-title">
@@ -340,7 +348,7 @@ const ProductDetail = () => {
                   <tr>
                     <td><Package size={13}/> Tình trạng</td>
                     <td style={{ color: oos ? '#dc2626' : '#059669', fontWeight: 600 }}>
-                      {isNgungBan ? 'Ngưng bán' : oos ? 'Hết hàng' : `Còn ${book.so_luong} cuốn`}
+                      {isNgungBan ? 'Ngưng bán' : oos ? 'Hết hàng' : `Còn ${book.so_luong_ton} cuốn`}
                     </td>
                   </tr>
                 </tbody>
@@ -348,10 +356,8 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Divider */}
           {book.mo_ta && <div className="pd3-card-div" />}
 
-          {/* Mô tả */}
           {book.mo_ta && (
             <div className="pd3-desc-wrap">
               <h2 className="pd3-section-title">
@@ -390,7 +396,7 @@ const ProductDetail = () => {
                       </div>
                     </div>
                   ))
-                : related.map(s => <RelCard key={s.id} sach={s} />)
+                : related.map(s => <RelCard key={s.sach_id} sach={s} />)
               }
             </div>
           </div>

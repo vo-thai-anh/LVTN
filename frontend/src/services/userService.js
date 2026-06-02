@@ -28,8 +28,8 @@ export const cartAPI = {
   // Trả về { success: true, data: { thong_tin_gio_hang, tong_tien_thanh_toan } }
   getCart: () => axios.get('/giohang'),
   addToCart: (data) => axios.post('/chitietgiohang/them', data),
-  updateQuantity: (sach_id, so_luong) => axios.put(`/chitietgiohang/${sach_id}`, { so_luong }),
-  removeItem: (sach_id) => axios.delete(`/chitietgiohang/${sach_id}`),
+  updateQuantity: (sach, so_luong) => axios.put(`/chitietgiohang/${sach}`, { so_luong }),
+  removeItem: (sach) => axios.delete(`/chitietgiohang/${sach}`),
 };
 
 // ================= ĐƠN HÀNG =================

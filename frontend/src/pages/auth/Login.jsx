@@ -62,7 +62,7 @@ const Login = () => {
             <div className="auth-logo-box-small">
               <BookOpen size={20} className="auth-logo-icon" />
             </div>
-            <h1 className="auth-title-compact">Đăng nhập</h1>
+            <h1 className="auth-title-compact">Đăng nhập</h1> 
             <p className="auth-subtitle-compact">Chào mừng bạn trở lại!</p>
           </div>
 

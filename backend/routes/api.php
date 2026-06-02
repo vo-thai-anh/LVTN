@@ -25,8 +25,6 @@ Route::get('/sach/{id}', [SachController::class, 'show']);
 Route::get('/loaisach', [LoaiSachController::class, 'index']);
 Route::get('/loaisach/{id}', [LoaiSachController::class, 'show']);
 
-Route::post('/upload', [ImageController::class, 'upload']);
-
 route::get('/loainguoidung', [LoaiNguoiDungController::class, 'index']);
 route::post('/themloainguoidung', [LoaiNguoiDungController::class, 'store']);
 route::get('/chitietloainguoidung/{id}', [LoaiNguoiDungController::class, 'show']);
@@ -46,7 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // quản lý sách
     Route::post('/sach', [SachController::class, 'store']);
-    Route::put('/sach/{id}', [SachController::class, 'update']);
+    Route::post('/sach/{id}', [SachController::class, 'update']);
     Route::delete('/sach/{id}', [SachController::class, 'destroy']);
 
     // quản lý loại sách
@@ -83,8 +81,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // chi tiết giỏ hàng
     Route::post('/chitietgiohang/them', [GioHang_ItemController::class, 'themVaoGio']);
-    Route::put('/chitietgiohang/{sach_id}', [GioHang_ItemController::class, 'capNhatSoLuong']);
-    Route::delete('/chitietgiohang/{sach_id}', [GioHang_ItemController::class, 'xoaChiTiet']);
+    Route::put('/chitietgiohang/{sach}', [GioHang_ItemController::class, 'capNhatSoLuong']);
+    Route::delete('/chitietgiohang/{sach}', [GioHang_ItemController::class, 'xoaChiTiet']);
 });
 
 

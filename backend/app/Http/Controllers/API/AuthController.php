@@ -12,114 +12,81 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // public function register(Request $request)
-    // {
-    //     try {
-    //         $validated = $request->validate([
-    //             'ten_dang_nhap' => 'required|string|max:30|unique:taikhoan,ten_dang_nhap',
-    //             'mat_khau'      => 'required|string|min:6|confirmed',
-    //             'khach_hang_id' => 'required|string|max:10|unique:khachhang,khach_hang_id',
-    //             'ten_khach_hang'=> 'required|string|max:30',
-    //             'email'         => 'required|email|max:30|unique:khachhang,email',
-    //             'so_dien_thoai' => 'required|string|max:10|unique:khachhang,so_dien_thoai',
-    //             'dia_chi'       => 'required|string|max:255',
-    //             'gioi_tinh'     => 'nullable|string|max:10',
-    //             'nam_sinh'      => 'nullable|date',
-    //         ]);
 
-    //         DB::beginTransaction();
-
-    //         // 1. Tạo bản ghi tài khoản bảo mật trước
-    //         $taiKhoan = TaiKhoan::create([
-    //             'ten_dang_nhap' => $validated['ten_dang_nhap'],
-    //             'mat_khau'      => Hash::make($validated['mat_khau']),
-    //         ]);
-
-    //         // 2. Tạo bản ghi thông tin chi tiết khách hàng trỏ về tài khoản trên
-    //         $khachHang = KhachHang::create([
-    //             'khach_hang_id'  => $validated['khach_hang_id'],
-    //             'ten_khach_hang' => $validated['ten_khach_hang'],
-    //             'email'          => $validated['email'],
-    //             'so_dien_thoai'  => $validated['so_dien_thoai'],
-    //             'dia_chi'        => $validated['dia_chi'],
-    //             'gioi_tinh'      => $validated['gioi_tinh'] ?? null,
-    //             'nam_sinh'       => $validated['nam_sinh'] ?? null,
-    //             'tai_khoan_id'   => $taiKhoan->tai_khoan_id, // Gắn khóa ngoại
-    //         ]);
-
-    //         DB::commit();
-
-    //         return response()->json([
-    //             "success" => true,
-    //             "message" => "Đăng ký tài khoản khách hàng thành công",
-    //             "data"    => [
-    //                 "tai_khoan"  => $taiKhoan,
-    //                 "khach_hang" => $khachHang
-    //             ]
-    //         ], 201);
-
-    //     } catch (ValidationException $e) {
-    //         return response()->json([
-    //             "success" => false,
-    //             "message" => "Dữ liệu đầu vào không hợp lệ",
-    //             "errors"  => $e->errors()
-    //         ], 422);
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return response()->json([
-    //             "success" => false,
-    //             "message" => "Lỗi hệ thống không thể đăng ký",
-    //             "error"   => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
     public function register(Request $request)
     {
         try {
-            // 1. Chỉ validate các trường thuộc về Tài khoản
             $validated = $request->validate([
                 'ten_dang_nhap'   => 'required|string|max:30|unique:taikhoan,ten_dang_nhap',
                 'mat_khau'        => 'required|string|min:6|confirmed',
-                'loai_nguoi_dung' => 'required|integer|exists:loainguoidung,loai_nguoi_dung_id',
+                'loai_nguoi_dung' => 'nullable|integer|exists:loainguoidung,loai_nguoi_dung_id',
                 
+                'ten_khach_hang'  => 'required|string|max:100',
+                'email'           => 'required|email|max:100|unique:khachhang,email',
+                'so_dien_thoai'   => 'required|string|max:10|unique:khachhang,so_dien_thoai',
+                'dia_chi'         => 'required|string|max:255',
+                'gioi_tinh'       => 'nullable|string|max:10',
+                'nam_sinh'        => 'nullable|date',
+            ], [
                 'ten_dang_nhap.required' => 'Tên đăng nhập không được để trống.',
-                'ten_dang_nhap.unique'   => 'Tên đăng nhập này đã tồn tại.',
+                'ten_dang_nhap.unique'   => 'Tên đăng nhập này đã tồn tại trên hệ thống.',
                 'mat_khau.required'      => 'Mật khẩu không được để trống.',
                 'mat_khau.min'           => 'Mật khẩu phải từ 6 ký tự trở lên.',
-                'mat_khau.confirmed'     => 'Xác nhận mật khẩu không khớp.',
+                'mat_khau.confirmed'     => 'Xác nhận mật khẩu không trùng khớp.',
+                'ten_khach_hang.required'=> 'Vui lòng nhập họ và tên của bạn.',
+                'email.required'         => 'Email không được bỏ trống.',
+                'email.unique'           => 'Email này đã được đăng ký sử dụng.',
+                'so_dien_thoai.required' => 'Số điện thoại không được bỏ trống.',
+                'so_dien_thoai.unique'   => 'Số điện thoại này đã tồn tại.',
+                'dia_chi.required'       => 'Vui lòng nhập địa chỉ giao hàng.',
             ]);
+
+            DB::beginTransaction();
 
             $taiKhoan = TaiKhoan::create([
                 'ten_dang_nhap'   => $validated['ten_dang_nhap'],
                 'mat_khau'        => Hash::make($validated['mat_khau']),
-                'loai_nguoi_dung' => $validated['loai_nguoi_dung'],
+                'loai_nguoi_dung' => $validated['loai_nguoi_dung'] ?? 1,
             ]);
-
+            $generatedKhachHangId = 'KH' . substr(time(), -8);
+            $khachHang = KhachHang::create([
+                'khach_hang_id'   => $generatedKhachHangId,
+                'ten_khach_hang'  => $validated['ten_khach_hang'],
+                'email'           => $validated['email'],
+                'so_dien_thoai'   => $validated['so_dien_thoai'],
+                'dia_chi'         => $validated['dia_chi'],
+                'gioi_tinh'       => $validated['gioi_tinh'] ?? null,
+                'nam_sinh'        => $validated['nam_sinh'] ?? null,
+                'tai_khoan_id'    => $taiKhoan->tai_khoan_id,
+            ]);
+            DB::commit();
             return response()->json([
                 "success" => true,
-                "message" => "Tạo tài khoản thành công!",
+                "message" => "Đăng ký tài khoản khách hàng thành công!",
                 "data"    => [
-                    "tai_khoan" => $taiKhoan
+                    "tai_khoan" => [
+                        "tai_khoan_id"  => $taiKhoan->tai_khoan_id,
+                        "ten_dang_nhap" => $taiKhoan->ten_dang_nhap,
+                    ],
+                    "khach_hang" => $khachHang
                 ]
             ], 201);
-
         } catch (ValidationException $e) {
             return response()->json([
                 "success" => false,
-                "message" => "Dữ liệu đầu vào không hợp lệ",
+                "message" => "Dữ liệu đăng ký không hợp lệ, vui lòng kiểm tra lại.",
                 "errors"  => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 "success" => false,
-                "message" => "Lỗi hệ thống không thể tạo tài khoản",
+                "message" => "Hệ thống gặp sự cố, không thể hoàn tất đăng ký.",
                 "error"   => $e->getMessage()
             ], 500);
         }
     }
-    /**
-     * Đăng nhập hệ thống (Kiểm tra từ bảng taikhoan và liên kết lấy thông tin khachhang)
-     */
+
     public function login(Request $request)
     {
         try {
@@ -130,36 +97,27 @@ class AuthController extends Controller
                 'ten_dang_nhap.required' => 'Vui lòng nhập tên đăng nhập',
                 'mat_khau.required'      => 'Vui lòng nhập mật khẩu'
             ]);
-
-            // Tìm tài khoản bảo mật trước
             $taiKhoan = TaiKhoan::where('ten_dang_nhap', $request->ten_dang_nhap)->first();
-
             if (!$taiKhoan || !Hash::check($request->mat_khau, $taiKhoan->mat_khau)) {
                 return response()->json([
                     "success" => false,
                     "message" => "Tên đăng nhập hoặc mật khẩu không chính xác"
                 ], 401);
             }
-
-            // Lấy thông tin khách hàng đi kèm với tài khoản này (nếu có)
             $khachHang = KhachHang::where('tai_khoan_id', $taiKhoan->tai_khoan_id)->first();
-
-            // Khởi tạo Token bằng Laravel Sanctum (Đảm bảo model TaiKhoan đã use HasApiTokens)
             $token = $taiKhoan->createToken('auth_token')->plainTextToken;
-
             return response()->json([
                 'success'      => true,
                 'message'      => 'Đăng nhập thành công',
                 'access_token' => $token,
                 'token_type'   => 'Bearer',
                 'user'         => [
-                    'tai_khoan_id'  => $taiKhoan->tai_khoan_id,
+                    'tai_khoan_id'   => $taiKhoan->tai_khoan_id,
                     'ten_dang_nhap' => $taiKhoan->ten_dang_nhap,
                     'loai_nguoi_dung' => $taiKhoan->loai_nguoi_dung,
                     'thong_tin_chi_tiet' => $khachHang
                 ]
             ], 200);
-
         } catch (ValidationException $e) {
             return response()->json([
                 "success" => false,
@@ -174,10 +132,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * Đăng xuất hệ thống
-     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

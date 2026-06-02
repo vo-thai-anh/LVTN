@@ -8,7 +8,7 @@ const mapBook = (book = {}) => ({
   gia: book.gia,
   soLuong: book.so_luong_ton,
   loaiSach: {
-    id: book.loai_sach,
+    id: book.loai_sach || '',
     tenLoai: book.loai_sach?.ten_loai|| ''
   },
   moTa: book.mo_ta,
@@ -17,6 +17,7 @@ const mapBook = (book = {}) => ({
   trongLuong: book.trong_luong,
   kichThuoc: book.kich_thuoc,
   soTrang: book.so_trang,
+  nhaCungCap: book.nha_cung_cap
 });
 
 const mapCategory = (cat = {}) => ({
@@ -45,7 +46,7 @@ const buildBookPayload = (payload = {}) => ({
   nha_xuat_ban: payload.nhaXuatBan,
   gia: Number(payload.gia) || 0,
   so_luong_ton: Number(payload.soLuong) || 0,
-  loai_sach: payload.loaiSach?.id || payload.loai_sach_id || '',
+  loai_sach:payload.loai_sach?.id || '',
   mo_ta: payload.moTa,
   trang_thai: Number(payload.trangThai) || 0,
   anh_bia: payload.anhBia,
@@ -73,16 +74,21 @@ export const AdminAPI = {
   },
 
   addBook: (data) => {
-    // Nếu data là FormData (thêm sách có ảnh), gửi trực tiếp data và thêm headers
     if (data instanceof FormData) {
       return axios.post('/sach', data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
     }
-    // Ngược lại nếu là object bình thường thì giữ nguyên logic cũ
     return axios.post('/sach', buildBookPayload(data));
   },
-  updateBook: (id, data) => axios.put(`/sach/${id}`, buildBookPayload(data)),
+  updateBook: (id, data) => {
+    if (data instanceof FormData) {
+      return axios.post(`/sach/${id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    return axios.post(`/sach/${id}`, buildBookPayload(data));
+  },
   deleteBook: (id) => axios.delete(`/sach/${id}`),
 
   getCategories: async () => {

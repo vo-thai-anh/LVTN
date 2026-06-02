@@ -13,8 +13,10 @@ class GioHang extends Model
         'khach_hang_id',
         'ngay_tao'
     ];
+    const CREATED_AT = 'ngay_tao';
+    const UPDATED_AT = null;
     public $incrementing = true;
-    public $timestamps = false;
+    public $timestamps = true;
     public function khachhang()
     {
         return $this->belongsTo(KhachHang::class, 'khach_hang_id', 'khach_hang_id');

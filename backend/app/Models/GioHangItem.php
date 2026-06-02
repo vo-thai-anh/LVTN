@@ -10,6 +10,8 @@ class GioHangItem extends Model
     protected $primaryKey = 'gio_hang_item_id';
     protected $keyType = 'int';
     protected $fillable = [
+        'gio_hang',
+        'sach',
         'so_luong',
         'don_gia',
         'thanh_tien',

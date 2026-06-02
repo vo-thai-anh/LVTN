@@ -18,6 +18,7 @@ class KhachHang extends Model
         'gioi_tinh',
         'nam_sinh',
         'ngay_tao',
+        'tai_khoan_id'
     ];
     public $incrementing = true;
     public $timestamps = false;

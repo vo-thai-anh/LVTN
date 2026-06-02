@@ -133,7 +133,7 @@ class SachController extends Controller
             'nha_cung_cap' => 'nullable|string|max:255',
             'anh_bia'      => 'nullable|string'
         ]);
-
+        
         try {
             if ($request->hasFile('anh_bia_file')) {
                 $file = $request->file('anh_bia_file');
@@ -172,9 +172,6 @@ class SachController extends Controller
         }
     }
 
-    /**
-     * XÓA SÁCH + XÓA HOÀN TOÀN ẢNH KHỎI CLOUDINARY
-     */
     public function destroy($id)
     {
         $sach = Sach::findOrFail($id);

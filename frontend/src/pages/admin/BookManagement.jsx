@@ -17,8 +17,6 @@ const BookManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
-  
-  // State quản lý File ảnh và Link xem trước ảnh (Preview)
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef(null);
@@ -38,7 +36,7 @@ const BookManagement = () => {
     trong_luong: '',
     kich_thuoc: '',
     so_trang: '',
-    anh_bia: '', // Giữ lại để lưu URL cũ khi sửa sách
+    anh_bia: '',
     nha_cung_cap: ''
   });
 
@@ -62,7 +60,7 @@ const BookManagement = () => {
         AdminAPI.getCategories()
       ]);
       
-      console.log("Dữ liệu gốc nhận về từ Service API:", booksRes);
+      // console.log("Dữ liệu gốc nhận về từ Service API:", booksRes);
       
       // 📝 CẬP NHẬT LẠI ĐOẠN ĐỌC DỮ LIỆU TẠI ĐÂY:
       if (booksRes && booksRes.content) {
@@ -103,37 +101,35 @@ const BookManagement = () => {
     if (book) {
       setEditingBook(book);
       setFormData({
-        ten_sach: book.ten_sach || '',
-        tac_gia: book.tac_gia || '',
-        nha_xuat_ban: book.nha_xuat_ban || '',
+        ten_sach: book.tenSach || '',
+        tac_gia: book.tacGia || '',
+        nha_xuat_ban: book.nhaXuatBan || '',
         gia: book.gia?.toString() || '',
-        so_luong_ton: book.so_luong_ton?.toString() || '',
-        // ✅ SỬA LỖI: Tự động bắt đúng thuộc tính ID của danh mục thuộc sách
-        loai_sach: book.loai_sach_id || book.loai_sach?.loai_sach_id || book.loai_sach?.id || '',
-        mo_ta: book.mo_ta || '',
-        trang_thai: book.trang_thai ?? 1,
-        trong_luong: book.trong_luong?.toString() || '',
-        kich_thuoc: book.kich_thuoc || '',
-        so_trang: book.so_trang?.toString() || '',
-        anh_bia: book.anh_bia || '',
-        nha_cung_cap: book.nha_cung_cap || ''
+        so_luong_ton: book.soLuong?.toString() || '',
+        loai_sach: book.loaiSach?.id?.loai_sach_id || '',
+        mo_ta: book.moTa || '',
+        trang_thai: book.trangThai ?? 1,
+        trong_luong: book.trongLuong?.toString() || '',
+        kich_thuoc: book.kichThuoc || '',
+        so_trang: book.soTrang?.toString() || '',
+        anh_bia: book.anhBia || '',
+        nha_cung_cap: book.nhaCungCap || ''
       });
       if (book.anh_bia) setPreviewUrl(book.anh_bia);
     } else {
       setEditingBook(null);
-      // ✅ SỬA LỖI: Lấy ID của danh mục đầu tiên một cách linh hoạt, tránh bị trống Form
       const defaultCategoryId = categories?.[0]?.loai_sach_id || categories?.[0]?.id || '';
       
       setFormData({
         ten_sach: '', tac_gia: '', nha_xuat_ban: '', gia: '', so_luong_ton: '',
-        loai_sach: defaultCategoryId, // Gán ID mặc định chuẩn
+        loai_sach: defaultCategoryId,
         mo_ta: '', trang_thai: 1,
         trong_luong: '', kich_thuoc: '', so_trang: '', anh_bia: '', nha_cung_cap: ''
       });
     }
     setShowModal(true);
   };
-
+    console.log("Dữ liệu sách đang được chỉnh sửa:", editingBook);
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -157,7 +153,7 @@ const BookManagement = () => {
     }
 
     setSubmitting(true);
-    const loadingToast = toast.loading(editingBook ? 'Đang cập nhật sản phẩm...' : 'Đang tải ảnh lên Cloudinary và lưu sách...');
+    const loadingToast = toast.loading('Đang cập nhật sản phẩm...');
     
     try {
       const formPayload = new FormData();
@@ -166,26 +162,33 @@ const BookManagement = () => {
       formPayload.append('nha_xuat_ban', formData.nha_xuat_ban || '');
       formPayload.append('gia', parseFloat(formData.gia) || 0);
       formPayload.append('so_luong_ton', parseInt(formData.so_luong_ton) || 0);
-      formPayload.append('loai_sach', categoryId);
+      formPayload.append('loai_sach', categoryId); // ID số nguyên sạch sẽ đã check ở trên
       formPayload.append('mo_ta', formData.mo_ta || '');
       formPayload.append('trang_thai', parseInt(formData.trang_thai));
       formPayload.append('trong_luong', parseInt(formData.trong_luong) || 0);
       formPayload.append('so_trang', parseInt(formData.so_trang) || 0);
       formPayload.append('kich_thuoc', formData.kich_thuoc || '');
       formPayload.append('nha_cung_cap', formData.nha_cung_cap || '');
-console.log("Dữ liệu thực tế trong FormData:", Object.fromEntries(formPayload));
+
+      // Kiểm tra file ảnh bìa
       if (selectedFile) {
         formPayload.append('anh_bia_file', selectedFile);
       } else if (editingBook && formData.anh_bia) {
         formPayload.append('anh_bia', formData.anh_bia);
       }
+
+      // In thử ra màn hình console ở Frontend xem các trường có đầy đủ không
+      console.log("Dữ liệu thực tế gửi đi:", Object.fromEntries(formPayload));
+
       if (editingBook) {
-        await AdminAPI.updateBook(editingBook.sach_id, formPayload);
+        // Truyền formPayload trực tiếp sang service
+        await AdminAPI.updateBook(editingBook.id, formPayload);
+        toast.success('Cập nhật sản phẩm thành công!', { id: loadingToast });
       } else {
         await AdminAPI.addBook(formPayload);
+        toast.success('Thêm sản phẩm mới thành công!', { id: loadingToast });
       }
 
-      toast.success(editingBook ? 'Cập nhật thành công!' : 'Thêm sản phẩm mới thành công!', { id: loadingToast });
       setShowModal(false);
       fetchData();
     } catch (err) {
@@ -261,10 +264,10 @@ console.log("Dữ liệu thực tế trong FormData:", Object.fromEntries(formPa
               </tr>
             ) : (
               books.map((book, idx) => {
-                const rowKey = book?.sach_id ? `book-row-${book.sach_id}` : `book-idx-${idx}`;
+                const rowKey = book?.id ? `book-row-${book.id}` : `book-idx-${idx}`;
                 
                 // Log thử 1 dòng đầu tiên ra tab Console để bạn kiểm tra tên các trường chính xác từ DB
-                if (idx === 0) console.log("Cấu trúc 1 cuốn sách nhận từ Backend:", book);
+                // if (idx === 0) console.log("Cấu trúc 1 cuốn sách nhận từ Backend:", book);
 
                 return (
                   <tr key={rowKey}>
@@ -298,19 +301,16 @@ console.log("Dữ liệu thực tế trong FormData:", Object.fromEntries(formPa
                       </span>
                     </td>
 
-                    {/* Cột 3: Giá niêm yết */}
                     <td>
                       <div style={{ fontWeight: 500 }}>
                         {book?.gia ? `${Number(book.gia).toLocaleString()}đ` : '0đ'}
                       </div>
                     </td>
 
-                    {/* Cột 4: Kho */}
                     <td className="text-center">
                       <span>{book?.soLuong ?? book?.so_luong ?? 0}</span>
                     </td>
 
-                    {/* Cột 5: Trạng thái */}
                     <td className="text-center">
                       <span style={{
                         fontSize: '11px', fontWeight: 500, padding: '4px 12px', borderRadius: '12px',
@@ -321,11 +321,10 @@ console.log("Dữ liệu thực tế trong FormData:", Object.fromEntries(formPa
                       </span>
                     </td>
 
-                    {/* Cột 6: Hành động */}
                     <td className="text-center">
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                         <button onClick={() => handleOpenModal(book)} className="btn btn-secondary" style={{ padding: '2px 8px', fontSize: '12px' }}>Sửa</button>
-                        <button onClick={() => handleDelete(book?.sach_id)} className="btn btn-danger" style={{ padding: '2px 8px', fontSize: '12px' }}>Xóa</button>
+                        <button onClick={() => handleDelete(book?.id)} className="btn btn-danger" style={{ padding: '2px 8px', fontSize: '12px' }}>Xóa</button>
                       </div>
                     </td>
                   </tr>
@@ -363,12 +362,12 @@ console.log("Dữ liệu thực tế trong FormData:", Object.fromEntries(formPa
                   {/* Khu vực Upload Ảnh Bìa Trực Quan */}
                   <div className="form-group" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '16px', border: '1px dashed var(--admin-divider)', borderRadius: '4px', background: 'var(--admin-bg-ash)' }}>
                     <label className="form-label" style={{ fontWeight: 500, width: '100%', textAlign: 'left' }}>Hình ảnh bìa sách</label>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handleFileChange} 
-                      accept="image/*" 
-                      style={{ display: 'none' }} 
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      style={{ display: 'none' }}
                     />
                     
                     <div 
@@ -410,17 +409,10 @@ console.log("Dữ liệu thực tế trong FormData:", Object.fromEntries(formPa
                       value={formData.loai_sach}
                       onChange={(e) => setFormData({...formData, loai_sach: e.target.value})}
                     >
-                      {/* {categories?.length === 0 && (
-                        <option value="">-- Chưa tải được danh mục / Thể loại rỗng --</option>
-                      )} */}
-                      
-                      {categories?.map((c, idx) => {
-                        const name = c.ten_loai_sach || c.tenLoai;
-                        const optionKey = name ? `cat-opt-${name}` : `cat-idx-${idx}`;
-                        // console.log(c);
+                      {categories?.map(cat => {
                         return (
-                          <option key={optionKey} value={name}>
-                            {name}
+                          <option key={cat.id} value={cat.id}>
+                            {cat.tenLoai || cat.ten_loai}
                           </option>
                         );
                       })}

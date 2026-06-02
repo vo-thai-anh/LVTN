@@ -5,31 +5,40 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\API\Controller;
 use App\Models\GioHang;
 use App\Models\GioHangItem;
+use App\Models\KhachHang;
 use Illuminate\Http\Request;
 
 class GioHangController extends Controller
 {
 
-    public function index(Request $request)
-    {
-        // Nhận diện khach_hang_id từ Token đang đăng nhập
-        $khachHangId = $request->user()->khach_hang_id ?? $request->user()->id;
-        // Tìm giỏ hàng theo khach_hang_id hoặc tự động tạo mới nếu chưa có
+public function index(Request $request)
+{
+    $user = $request->user();
+    $khachHangId = $user->khach_hang_id;
+    if (!$khachHangId) {
+        $taiKhoanId = $user->tai_khoan_id ?? $user->id;
+        $khachHang = KhachHang::where('tai_khoan_id', $taiKhoanId)->first();
+        if ($khachHang) {
+            $khachHangId = $khachHang->khach_hang_id;
+        }
+    }
+    if (!$khachHangId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Không tìm thấy thông tin khách hàng tương ứng với tài khoản này.'
+        ], 403);
+    }
+    try {
         $giohang = GioHang::firstOrCreate(
-            ['khach_hang_id' => $khachHangId],
-            ['ngay_tao' => now()] // Điền ngày tạo hiện tại nếu phải tạo mới
+            ['khach_hang_id' => $khachHangId]
         );
-        // Lấy danh sách các mặt hàng trong giỏ thông qua GioHangItem
-        // Khớp với cột liên kết 'gio_hang' trỏ đến khóa chính tự tăng 'gio_hang_id'
         $items = GioHangItem::with('Sach')
             ->where('gio_hang', $giohang->gio_hang_id)
             ->get();
-        // Tính toán tổng tiền thanh toán từ các item
         $tongTienThanhToan = 0;
         foreach ($items as $item) {
-            $tongTienThanhToan += $item->thanh_tien;
+            $tongTienThanhToan += $item->thanh_tien ?? ($item->so_luong * ($item->Sach->gia_ban ?? $item->Sach->gia ?? 0));
         }
-        // Đính kèm danh sách chi tiết động vào đối tượng trả về cho Frontend
         $giohang->chitietgiohangs = $items;
         return response()->json([
             'success' => true,
@@ -37,24 +46,28 @@ class GioHangController extends Controller
                 'thong_tin_gio_hang'   => $giohang,
                 'tong_tien_thanh_toan' => $tongTienThanhToan
             ]
-        ]);
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Hệ thống gặp sự cố khi tải dữ liệu giỏ hàng.',
+            'error'   => $e->getMessage()
+        ], 500);
     }
+}
     public function store(Request $request)
     {
-        // Sửa 'nguoi_dung_id' thành 'khach_hang_id' kết nối chuẩn bảng khachhang
         $validated = $request->validate([
             'khach_hang_id' => 'required|exists:khachhang,khach_hang_id|unique:giohang,khach_hang_id'
         ]);
         try {
-            // Tự động bổ sung ngày tạo hiện tại
-            $validated['ngay_tao'] = now();
             $giohang = GioHang::create($validated);
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Đã tạo giỏ hàng thành công.',
                 'data'    => $giohang
             ], 201);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
