@@ -18,40 +18,44 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.ten_dang_nhap || !formData.mat_khau) {
-      toast.error('Vui lòng nhập đầy đủ thông tin'); return;
-    }
-    setLoading(true);
-    try {
-      const res = await axiosClient.post('/login', formData);
-      
-      if (res && res.success === false) {
-        toast.error(res.message || 'Đăng nhập thất bại');
-        return;
+      e.preventDefault();
+      if (!formData.ten_dang_nhap || !formData.mat_khau) {
+          toast.error('Vui lòng nhập đầy đủ thông tin');
+          return;
       }
-      login(res.user, res.access_token);
-      toast.success('Đăng nhập thành công! Chào mừng trở lại!');
-      const detail = res.user?.thong_tin_chi_tiet || {};
-      const rawRole = res.user?.role || res.user?.quyen || res.user?.loai_nguoi_dung || detail.loai_nguoi_dung || null;
-      const finalRole = rawRole ? String(rawRole).trim() : '';
-      console.log(res.user);
-      const isAdmin = ['2'].includes(finalRole);
+      setLoading(true);
+      try {
+          const res = await axiosClient.post('/login', formData);
+          if (!res || res.success === false) {
+              toast.error(res?.message || 'Đăng nhập thất bại');
+              return;
+            }
+            login(res.user, res.access_token);
+          if (res.access_token) {
+                localStorage.setItem('token', res.access_token);
+                localStorage.setItem('user', JSON.stringify(res.user));
 
-      if (isAdmin) {
-        navigate('/admin');
-      } else {
-        navigate('/');
+            }
+          toast.success('Đăng nhập thành công!');
+          const detail = res.user?.thong_tin_chi_tiet || {};
+          const rawRole = res.user?.loai_nguoi_dung || detail.loai_nguoi_dung;
+          if (String(rawRole) === '2') {
+              navigate('/admin');
+          } else {
+              navigate('/');
+          }
+      } catch (err) {
+          // Interceptor của bạn trả về err là response.data
+          if (err?.errors) {
+              const firstError = Object.values(err.errors)[0][0];
+              toast.error(firstError);
+          } else {
+              toast.error(err?.message || 'Đăng nhập thất bại');
+          }
+      } finally { 
+          setLoading(false); 
       }
-    } catch (err) {
-        // err đã là dữ liệu từ error.response.data do interceptor xử lý
-        if (err.errors) {
-          toast.error(Object.values(err.errors)[0][0]);
-        } else {
-          toast.error(err.message || 'Đăng nhập thất bại');
-        }
-      } finally { setLoading(false); }
-    };
+  };
 
   return (
     <div className="auth-root ds-page">

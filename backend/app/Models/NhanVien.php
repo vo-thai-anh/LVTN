@@ -17,6 +17,8 @@ class NhanVien extends Model
         'dia_chi',
         'email',
         'ngay_tao',
+        'chuc_vu',
+        'tai_khoan_id',
     ];
     public $incrementing = true;
     public $timestamps = false;

@@ -49,7 +49,6 @@ const Cart = () => {
   useEffect(() => {
     console.log('>>> [DEBUG GIỎ HÀNG] Danh sách cartItems thay đổi:', cartItems);
   }, [cartItems]);
-
   const handleQty = async (item, delta) => {
   const currentQty = parseInt(item.so_luong || 0);
   const newQty = currentQty + delta;

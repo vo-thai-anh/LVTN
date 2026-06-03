@@ -13,6 +13,7 @@ class TaiKhoan extends Model
     protected $fillable = [
         'ten_dang_nhap',
         'mat_khau',
+        'email',
         'ngay_cap_nhat_lan_cuoi',
         'ngay_tao',
         'loai_nguoi_dung'

@@ -8,6 +8,9 @@ import AdminPagination from '../../components/admin/AdminPagination';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [NhanVien, setNhanVien] = useState([]);
+  const [activeTab, setActiveTab] = useState('user');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,8 +22,31 @@ const UserManagement = () => {
   const [totalPages, setTotalPages] = useState(0);
   
   const [formData, setFormData] = useState({
-    tenDangNhap: '', email: '', matKhau: '', soDienThoai: '', diaChi: '', role: 'khach_hang'
+    ten_dang_nhap: '',
+    mat_khau: '',
+    email: '',
+    ten_nhan_vien: '',
+    so_dien_thoai: '',
+    chuc_vu: '',
+    loai_nguoi_dung: ''
   });
+
+  const fetchRoles = async () => {
+    try {
+        const res = await AdminAPI.getRoles();
+        // console.log(">>> [DEBUG DỮ LIỆU QUYỀN]:", res);
+        setRoles(Array.isArray(res) ? res : (res.data || []));
+    } catch (err) {
+        toast.error('Không tải được danh sách quyền');
+    }
+};
+  useEffect(() => {
+      fetchRoles();
+  }, []);
+
+  useEffect(() => {
+    // console.log("Dữ liệu roles sau khi fetch:", roles);
+}, [roles]);
 
   useEffect(() => {
     fetchData();
@@ -37,71 +63,87 @@ const UserManagement = () => {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
-      const res = await AdminAPI.getUsers({ keyword: searchTerm, page: page, size: 8 });
-      // Spring Boot Page response: { content: [], totalPages: X }
-      if (res?.content) {
-        setUsers(res.content);
-        setTotalPages(res.totalPages);
-      } else {
-        setUsers(res || []);
-        setTotalPages(1);
-      }
+        setLoading(true);
+        // Gọi cả 2 API
+        const [userRes, nvRes] = await Promise.all([
+            AdminAPI.getUsers({ keyword: searchTerm, page: page, size: 8 }),
+            AdminAPI.getNhanViens()
+        ]);
+        
+        setUsers(userRes.content || userRes);
+        setNhanViens(nvRes);
     } catch (err) {
-      toast.error('Lỗi tải dữ liệu người dùng');
+        toast.error('Lỗi tải dữ liệu');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   const handleOpenModal = (user = null) => {
     if (user) {
       setEditingUser(user);
-      setFormData({ 
-        tenDangNhap: user?.tenDangNhap || user?.hoTen || '', 
-        email: user?.email || '', 
-        matKhau: '', 
-        soDienThoai: user?.soDienThoai || '', 
-        diaChi: user?.diaChi || '', 
-        role: user?.role || user?.quyen || 'khach_hang'
+      setFormData({
+          tenDangNhap:user.ten_dang_nhap || '',
+          email: user.email || '',
+          matKhau:'',
+          soDienThoai: user.so_dien_thoai || '',
+          diaChi: user.dia_chi || '',
+          chucVu: user.chuc_vu || '',
+          loai_nguoi_dung:user.role|| '' ,
       });
     } else {
       setEditingUser(null);
-      setFormData({ tenDangNhap: '', email: '', matKhau: '', soDienThoai: '', diaChi: '', role: 'khach_hang' });
+      setFormData({
+          tenDangNhap: '',
+          email: '',
+          matKhau: '',
+          soDienThoai: '',
+          diaChi: '',
+          hoTen: '',
+          chucVu: '',
+          loai_nguoi_dung: '' });
     }
     setShowModal(true);
   };
+  console.log(">>> [DEBUG DỮ LIỆU GỬI ĐI]:", formData);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (submitting) return;
-
-    setSubmitting(true);
-    const loadingToast = toast.loading('Đang xử lý...');
-    try {
-      let payload = { ...formData };
-      
-      // Nếu đang sửa và không nhập mật khẩu mới -> Xóa trường matKhau khỏi payload để Backend không đổi
-      if (editingUser && !formData.matKhau) {
-        delete payload.matKhau;
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setSubmitting(true);
+      const payload = {
+              ten_dang_nhap: formData.ten_dang_nhap,
+              mat_khau: formData.mat_khau,
+              email: formData.email,
+              ten_nhan_vien: formData.ten_nhan_vien,
+              so_dien_thoai: formData.so_dien_thoai,
+              chuc_vu: formData.chuc_vu,
+              loai_nguoi_dung: parseInt(formData.loai_nguoi_dung)
+          };
+          console.log(">>> [PAYLOAD CHUẨN]:", payload);
+      try {
+          console.log("Payload gửi đi:", payload)
+          await AdminAPI.addUser(payload);
+          console.log("Kết quả từ server:", response);
+          toast.success('Đã tạo thành viên thành công!');
+          setShowModal(false);
+          fetchData();
+      }  catch (err) {
+          console.log("--- BẮT ĐẦU GHI LỖI ---");
+          if (err.response) {
+              // Server trả về lỗi (4xx, 5xx)
+              console.error("Dữ liệu lỗi từ server:", err.response.data);
+              console.error("Trạng thái lỗi:", err.response.status);
+          } else if (err.request) {
+              // Request đã gửi nhưng không nhận được phản hồi
+              console.error("Không nhận được phản hồi từ server:", err.request);
+          } else {
+              console.log(err.message);
+              console.error("Lỗi:", err.message);
+          }
+      } finally {
+          setSubmitting(false);
       }
-
-      if (editingUser) {
-        await AdminAPI.updateUser(editingUser.id, payload);
-        toast.success('Cập nhật thành công', { id: loadingToast });
-      } else {
-        await AdminAPI.addUser(payload);
-        toast.success('Thêm người dùng mới thành công', { id: loadingToast });
-      }
-      setShowModal(false);
-      fetchData();
-    } catch (err) {
-      toast.error('Lỗi: ' + err.message, { id: loadingToast });
-    } finally {
-      setSubmitting(false);
-    }
   };
-
   const handleDelete = async (id) => {
     if (!window.confirm('Xác nhận xóa người dùng này?')) return;
     try {
@@ -113,11 +155,12 @@ const UserManagement = () => {
     }
   };
 
+
   return (
     <div className="user-management animate-in">
-       <header style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '32px', gap: '12px' }}>
+        <header style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '32px', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginRight: 'auto' }}>
-           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 500 }}>Quản lý Thành viên</h3>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 500 }}>Quản lý Thành viên</h3>
         </div>
         <div style={{ position: 'relative', width: '240px' }}>
           <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-light)' }} size={14} />
@@ -161,22 +204,23 @@ const UserManagement = () => {
               </tr>
             ) : (
               Array.isArray(users) && users.map((user) => (
+                console.log(">>> [DEBUG DỮ LIỆU NHẬN VỀ]:", user) ||
                 <tr key={user?.id}>
                   <td>
                     <div>
-                      <div style={{ fontWeight: 500, color: 'var(--admin-text-head)', fontSize: '14px' }}>{user?.tenDangNhap || user?.hoTen || 'Thành viên'}</div>
+                      <div style={{ fontWeight: 500, color: 'var(--admin-text-head)', fontSize: '14px' }}>{user?.ten_dang_nhap || user?.ho_ten || 'Thành viên'}</div>
                       <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>{user?.email}</div>
                     </div>
                   </td>
-                  <td style={{ fontSize: '13px' }}>{user?.soDienThoai || '—'}</td>
-                  <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px', color: 'var(--admin-text-muted)' }}>{user?.diaChi || '—'}</td>
+                  <td style={{ fontSize: '13px' }}>{user?.so_dien_thoai || '—'}</td>
+                  <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px', color: 'var(--admin-text-muted)' }}>{user?.dia_chi || '—'}</td>
                   <td className="text-center">
-                    <span style={{ 
+                    <span style={{
                       fontSize: '11px', fontWeight: 500, padding: '4px 10px', borderRadius: '4px',
-                      background: (user?.role || user?.quyen) === 'admin' || (user?.role || user?.quyen) === 'ADMIN' ? 'rgba(62, 106, 225, 0.1)' : 'var(--admin-bg-ash)',
-                      color: (user?.role || user?.quyen) === 'admin' || (user?.role || user?.quyen) === 'ADMIN' ? 'var(--admin-primary)' : 'var(--admin-text-muted)'
+                      background: (user?.role) === 'Admin' ? 'rgba(62, 106, 225, 0.1)' : 'var(--admin-bg-ash)',
+                      color: (user?.role) === 'Admin' ? 'var(--admin-primary)' : 'var(--admin-text-muted)'
                     }}>
-                      {user?.role || user?.quyen || 'khach_hang'}
+                      {user?.role}
                     </span>
                   </td>
                   <td className="text-center">
@@ -192,16 +236,16 @@ const UserManagement = () => {
         </table>
       </div>
 
-      <AdminPagination 
-        currentPage={page} 
-        totalPages={totalPages} 
-        onPageChange={setPage} 
+      <AdminPagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
       />
 
       <AnimatePresence>
         {showModal && (
           <div className="admin-modal-overlay">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -213,39 +257,70 @@ const UserManagement = () => {
                 <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary" style={{ minWidth: '32px', minHeight: '32px', padding: 0, borderRadius: '50%' }}><X size={18} /></button>
               </div>
 
-              <form onSubmit={handleSubmit} style={{ padding: '32px' }}>
+            <form onSubmit={handleSubmit} style={{ padding: '32px' }}>
+                {/* Tên đăng nhập */}
                 <div className="form-group">
-                  <label className="form-label">Tên đăng nhập</label>
-                  <input required className="form-control" value={formData.tenDangNhap} onChange={(e) => setFormData({...formData, tenDangNhap: e.target.value})} disabled={!!editingUser} placeholder="VD: nguyenvana" />
+                    <label className="form-label">Tên đăng nhập</label>
+                    <input 
+                        required className="form-control"
+                        value={formData.ten_dang_nhap}
+                        onChange={(e) => setFormData(prev => ({...prev, ten_dang_nhap: e.target.value}))}
+                    />
                 </div>
+
+                {/* Họ và tên */}
                 <div className="form-group">
-                  <label className="form-label">Email</label>
-                  <input required type="email" className="form-control" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} disabled={!!editingUser} />
+                    <label className="form-label">Họ và tên</label>
+                    <input required className="form-control" value={formData.ten_nhan_vien}
+                        onChange={(e) => setFormData(prev => ({...prev, ten_nhan_vien: e.target.value}))} />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Mật khẩu {editingUser && '(để trống nếu không đổi)'}</label>
-                  <input type="password" className="form-control" value={formData.matKhau} onChange={(e) => setFormData({...formData, matKhau: e.target.value})} required={!editingUser} />
+
+                {/* Email & SĐT */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="form-group">
+                        <label className="form-label">Email</label>
+                        <input required type="email" className="form-control" value={formData.email}
+                            onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))} />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Số điện thoại</label>
+                        <input required className="form-control" value={formData.so_dien_thoai}
+                            onChange={(e) => setFormData(prev => ({...prev, so_dien_thoai: e.target.value}))} />
+                    </div>
+                </div>
+
+                {/* Chức vụ & Quyền */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="form-group">
+                        <label className="form-label">Chức vụ</label>
+                        <input required className="form-control" value={formData.chuc_vu}
+                            onChange={(e) => setFormData(prev => ({...prev, chuc_vu: e.target.value}))} />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Loại người dùng</label>
+                        <select
+                            required
+                            className="form-control"
+                            value={formData.loai_nguoi_dung} // ĐÃ SỬA: Dùng đúng tên từ useState
+                            onChange={(e) => setFormData(prev => ({...prev, loai_nguoi_dung: e.target.value}))} // ĐÃ SỬA: Ghi vào đúng key
+                        >
+                            <option value="">-- Chọn quyền --</option>
+                            {roles.map(role => (
+                                <option key={role.loai_nguoi_dung_id} value={role.loai_nguoi_dung_id}>
+                                    {role.ten}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div className="form-group">
-                    <label className="form-label">Số điện thoại</label>
-                    <input className="form-control" value={formData.soDienThoai} onChange={(e) => setFormData({...formData, soDienThoai: e.target.value})} placeholder="0912..." />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Phân quyền</label>
-                    <select className="form-control" value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}>
-                      <option value="khach_hang">👤 Khách hàng</option>
-                      <option value="admin">🛡️ Admin</option>
-                    </select>
-                  </div>
-                </div>
-
+                {/* Mật khẩu */}
                 <div className="form-group">
-                  <label className="form-label">Địa chỉ</label>
-                  <input className="form-control" value={formData.diaChi} onChange={(e) => setFormData({...formData, diaChi: e.target.value})} placeholder="Số nhà, đường, quận, thành phố" />
+                    <label className="form-label">Mật khẩu</label>
+                    <input type="password" required={!editingUser} className="form-control" 
+                        value={formData.mat_khau} // ĐÃ SỬA: Dùng đúng tên
+                        onChange={(e) => setFormData(prev => ({...prev, mat_khau: e.target.value}))} />
                 </div>
-
                 <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--admin-divider)' }}>
                   <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">Hủy</button>
                   <button type="submit" className="btn btn-primary" disabled={submitting}>

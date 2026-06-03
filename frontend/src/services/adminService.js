@@ -26,12 +26,16 @@ const mapCategory = (cat = {}) => ({
 });
 
 const mapUser = (user = {}) => ({
-  id: user.khach_hang_id,
-  tenDangNhap: user.taiKhoan?.ten_dang_nhap || user.ten_khach_hang || '',
+  id: user.khach_hang_id||user.nhan_vien_id,
+  tenDangNhap: user.TaiKhoan?.ten_dang_nhap ||'',
   email: user.email,
   soDienThoai: user.so_dien_thoai,
   diaChi: user.dia_chi,
-  role: 'khach_hang'
+  role: user.taikhoan?.loai_nguoi_dung || '',
+  hoTen: user.ten_khach_hang || user.ten_nhan_vien || '',
+  chucVu: user.chuc_vu || '',
+  namSinh: user.nam_sinh || '',
+  gioiTinh: user.gioi_tinh || ''
 });
 
 const normalizeApiResponse = (res) => {
@@ -54,9 +58,6 @@ const buildBookPayload = (payload = {}) => ({
   kich_thuoc: payload.kichThuoc,
   so_trang: Number(payload.soTrang) || 0,
 });
-
-const randomId = () => Math.random().toString(36).substring(2, 12).toUpperCase();
-
 export const AdminAPI = {
   getBooks: async (params) => {
     const endpoint = params?.search ? '/sach/search' : '/sach';
@@ -90,7 +91,7 @@ export const AdminAPI = {
     return axios.post(`/sach/${id}`, buildBookPayload(data));
   },
   deleteBook: (id) => axios.delete(`/sach/${id}`),
-
+  //categories
   getCategories: async () => {
     const res = await axios.get('/loaisach');
     const data = normalizeApiResponse(res);
@@ -99,34 +100,29 @@ export const AdminAPI = {
   addCategory: (data) => axios.post('/loaisach', { ten_loai: data.tenLoai }),
   updateCategory: (id, data) => axios.put(`/loaisach/${id}`, { ten_loai: data.tenLoai }),
   deleteCategory: (id) => axios.delete(`/loaisach/${id}`),
-
+  //user
   getUsers: async () => {
     const res = await axios.get('/nguoidung');
     const data = normalizeApiResponse(res);
-    const users = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
-    return {
-      content: users.map(mapUser),
-      totalPages: data?.last_page || 1
-    };
+    return Array.isArray(data) ? data.map(mapUser) : (Array.isArray(data?.data) ? data.data.map(mapUser) : []);
   },
-  addUser: (data) => axios.post('/register', {
-    tai_khoan_id: randomId(),
-    ten_dang_nhap: data.tenDangNhap,
-    mat_khau: data.matKhau,
-    mat_khau_confirmation: data.matKhau,
-    khach_hang_id: randomId(),
-    ten_khach_hang: data.tenDangNhap,
-    email: data.email,
-    so_dien_thoai: data.soDienThoai,
-    dia_chi: data.diaChi,
-    gioi_tinh: data.gioiTinh || null,
-    nam_sinh: data.namSinh || null
-  }),
+  addUser: (data) => {
+    return axios.post('/registerNhanVien', {
+      ten_dang_nhap: data.ten_dang_nhap,
+      mat_khau: data.mat_khau,
+      mat_khau_confirmation: data.mat_khau,
+      email: data.email,
+      ten_nhan_vien: data.ten_nhan_vien,
+      so_dien_thoai: data.so_dien_thoai,
+      chuc_vu: data.chuc_vu,
+      loai_nguoi_dung: parseInt(data.loai_nguoi_dung)
+    });
+  },
   updateUser: (id, data) => axios.put(`/nguoidung/${id}`, {
-    ten_khach_hang: data.tenDangNhap,
+    ten_khach_hang: data.ten_dang_nhap,
     email: data.email,
-    so_dien_thoai: data.soDienThoai,
-    dia_chi: data.diaChi
+    so_dien_thoai: data.so_dien_thoai,
+    dia_chi: data.dia_chi
   }),
   deleteUser: (id) => axios.delete(`/nguoidung/${id}`),
 
@@ -140,7 +136,17 @@ export const AdminAPI = {
     const data = normalizeApiResponse(res);
     return data;
   },
-  updateOrderStatus: (id, statusData) => axios.put(`/donhang/${id}`, statusData)
+  updateOrderStatus: (id, statusData) => axios.put(`/donhang/${id}`, statusData),
+  getRoles: async () => {
+      try {
+          const res = await axios.get('/loainguoidung');
+          console.log("Dữ liệu Role:", res);
+          return normalizeApiResponse(res);
+      } catch (error) {
+          console.error("Lỗi gọi API Roles:", error);
+          throw error;
+      }
+  },
 };
 
 export default AdminAPI;

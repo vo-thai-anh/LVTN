@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\Controller;
 use App\Models\KhachHang;
+use App\Models\NhanVien;
 use App\Models\TaiKhoan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -87,6 +88,47 @@ class AuthController extends Controller
         }
     }
 
+    public function registerNhanVien(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'ten_dang_nhap'   => 'required|string|max:30|unique:taikhoan,ten_dang_nhap',
+                'mat_khau'        => 'required|string|min:6',
+                'email'           => 'required|unique:taikhoan,email',
+                'ten_nhan_vien'   => 'required|string|max:100',
+                'so_dien_thoai'   => 'required|string|max:10',
+                'chuc_vu'         => 'required|string',
+                'loai_nguoi_dung' => 'required|integer|exists:loainguoidung,loai_nguoi_dung_id',
+            ]);
+            DB::beginTransaction();
+            $taiKhoan = TaiKhoan::create([
+                'ten_dang_nhap' => $validated['ten_dang_nhap'],
+                'mat_khau'      => Hash::make($validated['mat_khau']),
+                'email'         => $validated['email'],
+                'loai_nguoi_dung'=> $validated['loai_nguoi_dung'],
+                'ngay_tao'      => now(),
+            ]);
+            $nhanVien = NhanVien::create([
+                'ma_nhan_vien' => 'NV' . str_pad(NhanVien::max('nhan_vien_id') + 1, 6, '0', STR_PAD_LEFT),
+                'ten_nhan_vien' => $validated['ten_nhan_vien'],
+                'so_dien_thoai' => $validated['so_dien_thoai'],
+                'email'         => $validated['email'],
+                'chuc_vu'       => $validated['chuc_vu'],
+                'tai_khoan_id'  => $taiKhoan->tai_khoan_id,
+            ]);
+            DB::commit();
+            return response()->json([
+                "success" => true,
+                "message" => "Đã tạo tài khoản nhân viên thành công!",
+                "data"    => ["tai_khoan" => $taiKhoan, "nhan_vien" => $nhanVien]
+            ], 201);
+        } catch (ValidationException $e) {
+            return response()->json(["success" => false, "message" => $e->errors()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(["success" => false, "message" => "Lỗi: " . $e->getMessage()], 500);
+        }
+    }
     public function login(Request $request)
     {
         try {

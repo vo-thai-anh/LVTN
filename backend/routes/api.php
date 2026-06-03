@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\ImageController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ use App\Http\Controllers\API\PhieuXuatController;
 
 Route::post('/login',[AuthController::class,'login']);
 Route::post('/register',[AuthController::class,'register']);
+Route::post('/registerNhanVien', [AuthController::class, 'registerNhanVien']);
 Route::get('/sach/filter', [SachController::class, 'filter']);
 Route::get('/sach/search', [SachController::class, 'search']);
 Route::get('/sach', [SachController::class, 'index']);
@@ -25,22 +27,25 @@ Route::get('/sach/{id}', [SachController::class, 'show']);
 Route::get('/loaisach', [LoaiSachController::class, 'index']);
 Route::get('/loaisach/{id}', [LoaiSachController::class, 'show']);
 
-route::get('/loainguoidung', [LoaiNguoiDungController::class, 'index']);
 route::post('/themloainguoidung', [LoaiNguoiDungController::class, 'store']);
 route::get('/chitietloainguoidung/{id}', [LoaiNguoiDungController::class, 'show']);
 route::put('/sualoainguoidung/{id}', [LoaiNguoiDungController::class, 'update']);
 route::delete('/xoaloainguoidung/{id}', [LoaiNguoiDungController::class, 'destroy']);
 Route::middleware('auth:sanctum')->group(function () {
+    //admin
+    Route::get('/nguoidung', [AdminController::class, 'index']);
+    //nhanvien
     // người dùng
-    Route::get('/nguoidung', [KhachHangController::class, 'index']);
     Route::get('/nguoidung/{id}', [KhachHangController::class, 'show']);
     Route::put('/nguoidung/{id}', [KhachHangController::class, 'update']);
-
+    Route::delete('/nguoidung/{id}', [KhachHangController::class, 'destroy']);
     // giỏ hàng
     Route::get('/giohang', [GioHangController::class, 'index']);
     Route::post('/giohang', [GioHangController::class, 'store']);
     Route::put('/giohang/{id}', [GioHangController::class, 'update']);
     Route::delete('/giohang/{id}', [GioHangController::class, 'destroy']);
+    //loainguoidung
+    route::get('/loainguoidung', [LoaiNguoiDungController::class, 'index']);
 
     // quản lý sách
     Route::post('/sach', [SachController::class, 'store']);
@@ -84,6 +89,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/chitietgiohang/{sach}', [GioHang_ItemController::class, 'capNhatSoLuong']);
     Route::delete('/chitietgiohang/{sach}', [GioHang_ItemController::class, 'xoaChiTiet']);
 });
+
+
 
 
 

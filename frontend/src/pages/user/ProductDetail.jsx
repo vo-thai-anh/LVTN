@@ -69,8 +69,8 @@ const RelCard = ({ sach }) => (
   <Link to={`/product/${sach.sach_id}`} className="pd3-rel-card">
     <div className="pd3-rel-img">
       <img
-        src={getImageUrl(sach.anh_bia)} 
-        alt={sach.ten_sach} 
+        src={getImageUrl(sach.anh_bia)}
+        alt={sach.ten_sach}
         loading="lazy"
         onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x600/e2e8f0/475569?text=Chua+co+anh'; }}
       />

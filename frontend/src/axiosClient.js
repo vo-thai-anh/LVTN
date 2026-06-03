@@ -22,6 +22,7 @@ export const adminAxios = axios.create({
   },
 });
 
+
 // Request Interceptor: Gắn token
 const setupRequestInterceptor = (instance) => {
   instance.interceptors.request.use((config) => {
@@ -42,9 +43,11 @@ const setupResponseInterceptor = (instance) => {
     (response) => response.data,
     (error) => {
       console.error('API Error:', error.response?.data || error.message);
-      
+    if(error.response?.status === 403) {
+      // code rieng
+    }
       // Xử lý hết hạn token
-      if (error.response?.status === 401 || error.response?.status === 403) {
+      if (error.response?.status === 401 ) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         // Không redirect tự động để tránh loop, để Component xử lý hoặc dùng event

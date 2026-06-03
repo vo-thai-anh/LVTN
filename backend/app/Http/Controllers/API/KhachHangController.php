@@ -18,7 +18,6 @@ class KhachHangController extends Controller
             'data'    => $khachHangs
         ]);
     }
-
     public function show($id)
     {
         // Lấy thông tin khách hàng kèm theo tài khoản đăng nhập của họ

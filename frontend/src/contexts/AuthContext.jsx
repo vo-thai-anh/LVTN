@@ -30,8 +30,7 @@ export const AuthProvider = ({ children }) => {
       try {
         setUser(normalizeUser(JSON.parse(savedUser)));
       } catch (e) {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        console.error('Failed to parse user from localStorage', e);
       }
     }
     setLoading(false);
