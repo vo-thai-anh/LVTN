@@ -19,8 +19,8 @@ const AdminApp = () => {
         <Route path="categories" element={<CategoryManagement />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="orders" element={<OrderManagement />} />
-        <Route path="InventoryExportPage" element={<InventoryExportPage />} />
-        <Route path="InventoryImportPage" element={<InventoryImportPage />} />
+        <Route path="phieu-xuat" element={<InventoryExportPage />} />
+        <Route path="phieu-nhap" element={<InventoryImportPage />} />
         {/* Redirect any other sub-paths to admin dashboard */}
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Route>

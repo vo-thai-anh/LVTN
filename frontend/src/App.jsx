@@ -73,9 +73,6 @@ const AnimatedRoutes = () => {
         <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
         <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />
         <Route path="/payment-gateway" element={<PageWrapper><PaymentGateway /></PageWrapper>} />
-        <Route path="/admin/phieu-nhap" element={<InventoryImportPage />} />
-        <Route path="/admin/phieu-xuat" element={<InventoryExportPage />} />
-        {/* <Route path="/admin/ton-kho" element={<InventoryReportPage />} /> */}
         {/* Protected Admin Routes */}
         <Route
             path="/admin/*"

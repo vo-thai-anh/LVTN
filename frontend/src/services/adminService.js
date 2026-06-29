@@ -60,11 +60,11 @@ const buildBookPayload = (payload = {}) => ({
 });
 export const AdminAPI = {
   getBooks: async (params) => {
-    const endpoint = params?.search ? '/sach/search' : '/sach';
-    const res = await axios.get(endpoint, {
+    const res = await axios.get('/sach', {
       params: {
         search: params?.search || undefined,
         page: params?.page > 0 ? params.page : 1,
+        size: params?.size || undefined,
       }
     });
     const data = normalizeApiResponse(res);
@@ -153,11 +153,11 @@ export const AdminAPI = {
           throw error;
       }
   },
-  getPhieuNhap: () => axiosClient.get('/phieu-nhap'),
-  createPhieuNhap: (data) => axiosClient.post('/phieu-nhap', data),
-  getPhieuXuat: () => axiosClient.get('/phieu-xuat'),
-  createPhieuXuat: (data) => axiosClient.post('/phieu-xuat', data),
-  getTonKho: () => axiosClient.get('/ton-kho')
+  getPhieuNhap: () => axios.get('/phieunhap'),
+  createPhieuNhap: (data) => axios.post('/phieunhap', data),
+  getPhieuXuat: () => axios.get('/phieuxuat'),
+  createPhieuXuat: (data) => axios.post('/phieuxuat', data),
+  getTonKho: () => axios.get('/ton-kho')
 };
 
 export default AdminAPI;
