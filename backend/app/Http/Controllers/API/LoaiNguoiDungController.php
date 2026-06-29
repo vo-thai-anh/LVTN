@@ -31,7 +31,6 @@ class LoaiNguoiDungController extends Controller
     }
     public function store(Request $request)
     {
-        // Khai báo các ràng buộc kiểm tra dữ liệu đầu vào (Bỏ qua trường ID)
         $validator = Validator::make($request->all(), [
             'ten' => 'required|string|max:50|unique:loainguoidung,ten',
         ], [
@@ -49,7 +48,6 @@ class LoaiNguoiDungController extends Controller
         }
 
         try {
-            // Database sẽ tự động sinh loai_nguoi_dung_id, bạn chỉ cần truyền 'ten'
             $loaiNguoiDung = LoaiNguoiDung::create([
                 'ten' => $request->ten
             ]);
@@ -57,7 +55,7 @@ class LoaiNguoiDungController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Thêm mới loại người dùng thành công',
-                'data'    => $loaiNguoiDung // Trả về sẽ tự động kèm theo ID mới sinh
+                'data'    => $loaiNguoiDung
             ], 201);
         } catch (\Exception $e) {
             return response()->json([

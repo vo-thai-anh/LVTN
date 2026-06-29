@@ -12,7 +12,7 @@ class PhieuNhap extends Model
     protected $fillable = [
         'ngay_nhap',
         'tong_tien',
-        'so_luong'
+        'so_luong',
     ];
     public $incrementing = true;
     public $timestamps = false;
@@ -21,4 +21,7 @@ class PhieuNhap extends Model
     {
         return $this->belongsTo(Sach::class, 'sach', 'sach_id');
     }
+    public function chiTiet() {
+    return $this->hasMany(PhieuNhapChiTiet::class, 'phieu_nhap_id', 'phieu_nhap_id');
+}
 }

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('dia_chi', 255)->nullable();
             $table->string('gioi_tinh', 10)->nullable();
             $table->date('nam_sinh')->nullable();
-            
+            $table->string('email')->nullable();
             $table->string('chuc_vu', 50)->nullable();
             $table->decimal('luong', 12, 2)->nullable();
             $table->date('ngay_vao_lam')->nullable();

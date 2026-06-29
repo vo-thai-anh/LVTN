@@ -91,7 +91,32 @@ const AdminLayout = () => {
               {!isCollapsed && <span>Đơn hàng</span>}
             </NavLink>
           </NavGroup>
+          <NavGroup title="Kho và Nhà Cung Cấp" isCollapsed={isCollapsed}>
+            <NavLink to="/admin/Kho" className="admin-nav-item">
+              <Users size={18} />
+              {!isCollapsed && <span>Nhập Kho</span>}
+            </NavLink>
+            <NavLink to="/admin/NCC" className="admin-nav-item">
+              <ShoppingCart size={18} />
+              {!isCollapsed && <span>Nhà Cung Cấp</span>}
+            </NavLink>
+            <NavLink to="/admin/KK" className="admin-nav-item">
+              <ShoppingCart size={18} />
+              {!isCollapsed && <span>Kiểm Kho</span>}
+            </NavLink>
+          </NavGroup>
+          <NavGroup title="Marketing và Khuyến Mãi" isCollapsed={isCollapsed}>
+            <NavLink to="/admin/MGG" className="admin-nav-item">
+              <Users size={18} />
+              {!isCollapsed && <span>Mã giảm giá</span>}
+            </NavLink>
+            <NavLink to="/admin/CD" className="admin-nav-item">
+              <ShoppingCart size={18} />
+              {!isCollapsed && <span>Chiến dịch khuyến mãi</span>}
+            </NavLink>
+          </NavGroup>
         </div>
+
 
         <div style={{ marginTop: 'auto', borderTop: '1px solid var(--admin-divider)', padding: '12px' }}>
           <button onClick={() => setIsCollapsed(!isCollapsed)} className="admin-nav-item" style={{ width: '100%', marginBottom: '4px' }}>

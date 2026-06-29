@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('phieunhap', function (Blueprint $table) {
             $table->id('phieu_nhap_id');
-            $table->foreignId('sach')->references('sach_id')->on('sach');
             $table->timestamp('ngay_nhap')->nullable();
-            $table->decimal('tong_tien',10,2)->nullable();
-            $table->integer('so_luong')->nullable();
+            $table->decimal('tong_tien', 10, 2)->nullable();
+            $table->string('ghi_chu')->nullable();
         });
     }
 

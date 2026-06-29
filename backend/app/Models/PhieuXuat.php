@@ -21,4 +21,8 @@ class PhieuXuat extends Model
     {
         return $this->belongsTo(Sach::class, 'sach', 'sach_id');
     }
+    public function chiTiet()
+    {
+        return $this->hasMany(PhieuXuatChiTiet::class, 'phieu_xuat_id', 'phieu_xuat_id');
+    }
 }
