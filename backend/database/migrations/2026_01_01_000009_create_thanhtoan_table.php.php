@@ -17,6 +17,7 @@ return new class extends Migration
             $table->tinyInteger('trang_thai')->nullable();
             $table->timestamp('ngay_tao')->useCurrent();
             $table->foreignId('phuong_thuc_id')->references('phuong_thuc_id')->on('phuongthucthanhtoan');
+            $table->foreignId('don_hang')->references('don_hang_id')->on('donhang');
         });
     }
 

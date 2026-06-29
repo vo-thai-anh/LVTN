@@ -21,5 +21,9 @@ class GioHang extends Model
     {
         return $this->belongsTo(KhachHang::class, 'khach_hang_id', 'khach_hang_id');
     }
+    public function chitietgiohangs()
+    {
+        return $this->hasMany(GioHangItem::class, 'gio_hang', 'gio_hang_id');
+    }
 
 }

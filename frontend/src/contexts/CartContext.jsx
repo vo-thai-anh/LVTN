@@ -10,27 +10,18 @@ export const CartProvider = ({ children }) => {
   const [loadingCart, setLoadingCart] = useState(true);
 
   const fetchCart = useCallback(async () => {
-  // THÊM ĐOẠN NÀY VÀO: Nếu không có user HOẶC user có quyền là 3 (Admin) thì dừng lại luôn
-    if (!user || String(user.role) === '3') {
-      setCartItems([]);
-      setLoadingCart(false);
-      return;
-    }
-
     setLoadingCart(true);
-    try {
-      const res = await cartAPI.getCart();
-      if (res && res.success && res.data?.thong_tin_gio_hang) {
-        setCartItems(res.data.thong_tin_gio_hang.chitietgiohangs || []);
-      } else {
-        setCartItems([]);
+      try {
+          const res = await cartAPI.getCart();
+          if (res && res.data) {
+              const items = res.data.thong_tin_gio_hang?.chitietgiohangs || [];
+              setCartItems(items);
+          }
+      } catch (error) {
+          console.error('Lỗi:', error);
+      } finally {
+          setLoadingCart(false);
       }
-    } catch (error) {
-      console.error('Lỗi tải giỏ hàng:', error);
-      setCartItems([]);
-    } finally {
-      setLoadingCart(false);
-    }
   }, [user]);
 
   useEffect(() => {

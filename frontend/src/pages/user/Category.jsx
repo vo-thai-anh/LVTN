@@ -125,7 +125,7 @@ const Category = () => {
   const [showSort, setShowSort]       = useState(false);
 
   const [filters, setFilters] = useState({
-    loai_sach_id: searchParams.get('loai_sach_id') || '',
+    loai_sach_id: searchParams.get('loai_sach_id') ||searchParams.get('loai') || '',
     nha_xuat_ban: searchParams.get('nha_xuat_ban') || '',
     gia_min: '',
     gia_max: '',
@@ -295,7 +295,6 @@ const Category = () => {
       </div>
 
       <div className="cat-layout-wrapper">
-        {/* Breadcrumb & Title */}
         <div className="cat-top-header">
           <div className="cat-breadcrumb">
             <Link to="/">Trang chủ</Link>
@@ -305,9 +304,7 @@ const Category = () => {
           <h1 className="cat-main-title">Danh mục sản phẩm</h1>
         </div>
 
-        {/* Cột Phải -> Full Width Now */}
         <main className="cat-main-fullwidth">
-          {/* Toolbar */}
           <div className="cat-toolbar">
             <div className="cat-toolbar-left">
               <button className="cat-filter-trigger" onClick={() => setDrawerOpen(true)}>
@@ -344,13 +341,11 @@ const Category = () => {
               )}
             </div>
           </div>
-
-          {/* Tags (if any filter is active) */}
           {hasActiveFilter && (
             <div className="cat-tags-row">
-              {filters.loai_sach_id && (categories || []).find(c => c.id == filters.loai_sach_id) && (
+              {filters.loai_sach_id && (categories || []).find(c => c.loai_sach_id == filters.loai_sach_id) && (
                 <span className="cat-tag">
-                  {(categories || []).find(c => c.id == filters.loai_sach_id).ten_loai}
+                  {(categories || []).find(c => c.loai_sach_id == filters.loai_sach_id).ten_loai}
                   <button onClick={() => handleFilter('loai_sach_id', '')}><X size={14} /></button>
                 </span>
               )}

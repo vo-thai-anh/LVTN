@@ -15,47 +15,53 @@ use App\Http\Controllers\API\LoaiNguoiDungController;
 use App\Http\Controllers\API\NhanVienController;
 use App\Http\Controllers\API\PhieuNhapController;
 use App\Http\Controllers\API\PhieuXuatController;
+use App\Http\Controllers\API\PhuongThucThanhToanController;
 
-Route::post('/login',[AuthController::class,'login']);
-Route::post('/register',[AuthController::class,'register']);
-Route::post('/registerNhanVien', [AuthController::class, 'registerNhanVien']);
-Route::get('/sach/filter', [SachController::class, 'filter']);
-Route::get('/sach/search', [SachController::class, 'search']);
-Route::get('/sach', [SachController::class, 'index']);
-Route::get('/sach/{id}', [SachController::class, 'show']);
+Route::post('/login',[AuthController::class,'login']); //v
+Route::post('/register',[AuthController::class,'register']);//v
+Route::post('/registerNhanVien', [AuthController::class, 'registerNhanVien']);//v
+Route::get('/sach/filter', [SachController::class, 'filter']);//v
+Route::get('/sach/search', [SachController::class, 'search']);//v
+Route::get('/sach', [SachController::class, 'index']);//v
+Route::get('/sach/{id}', [SachController::class, 'show']);//v
 
-Route::get('/loaisach', [LoaiSachController::class, 'index']);
-Route::get('/loaisach/{id}', [LoaiSachController::class, 'show']);
+Route::get('/loaisach', [LoaiSachController::class, 'index']);//v
+Route::get('/loaisach/{id}', [LoaiSachController::class, 'show']);//v
 
-route::post('/themloainguoidung', [LoaiNguoiDungController::class, 'store']);
+route::post('/themloainguoidung', [LoaiNguoiDungController::class, 'store']);//v
 route::get('/chitietloainguoidung/{id}', [LoaiNguoiDungController::class, 'show']);
-route::put('/sualoainguoidung/{id}', [LoaiNguoiDungController::class, 'update']);
-route::delete('/xoaloainguoidung/{id}', [LoaiNguoiDungController::class, 'destroy']);
+route::put('/sualoainguoidung/{id}', [LoaiNguoiDungController::class, 'update']);//v
+route::delete('/xoaloainguoidung/{id}', [LoaiNguoiDungController::class, 'destroy']);//v
+
+route::post('/themphuongthuc', [PhuongThucThanhToanController::class, 'store']);//v
+
 Route::middleware('auth:sanctum')->group(function () {
     //admin
-    Route::get('/nguoidung', [AdminController::class, 'index']);
+    Route::get('/nguoidung', [AdminController::class, 'index']);//v
     //nhanvien
+    
     // người dùng
-    Route::get('/nguoidung/{id}', [KhachHangController::class, 'show']);
+    Route::get('/nguoidung/{id}', [KhachHangController::class, 'show']);//v
     Route::put('/nguoidung/{id}', [KhachHangController::class, 'update']);
     Route::delete('/nguoidung/{id}', [KhachHangController::class, 'destroy']);
     // giỏ hàng
-    Route::get('/giohang', [GioHangController::class, 'index']);
-    Route::post('/giohang', [GioHangController::class, 'store']);
-    Route::put('/giohang/{id}', [GioHangController::class, 'update']);
-    Route::delete('/giohang/{id}', [GioHangController::class, 'destroy']);
+    Route::get('/giohang', [GioHangController::class, 'index']);//v
+    Route::post('/giohang', [GioHangController::class, 'store']);//v
+    Route::put('/giohang/{id}', [GioHangController::class, 'update']);//v
+    Route::delete('/giohang/{id}', [GioHangController::class, 'destroy']);//v
+
     //loainguoidung
-    route::get('/loainguoidung', [LoaiNguoiDungController::class, 'index']);
+    route::get('/loainguoidung', [LoaiNguoiDungController::class, 'index']);//v
 
     // quản lý sách
-    Route::post('/sach', [SachController::class, 'store']);
-    Route::post('/sach/{id}', [SachController::class, 'update']);
-    Route::delete('/sach/{id}', [SachController::class, 'destroy']);
+    Route::post('/sach', [SachController::class, 'store']);//v
+    Route::post('/sach/{id}', [SachController::class, 'update']);//v
+    Route::delete('/sach/{id}', [SachController::class, 'destroy']);//v
 
     // quản lý loại sách
-    Route::post('/loaisach', [LoaiSachController::class, 'store']);
-    Route::put('/loaisach/{id}', [LoaiSachController::class, 'update']);
-    Route::delete('/loaisach/{id}', [LoaiSachController::class, 'destroy']);
+    Route::post('/loaisach', [LoaiSachController::class, 'store']);//v
+    Route::put('/loaisach/{id}', [LoaiSachController::class, 'update']);//v
+    Route::delete('/loaisach/{id}', [LoaiSachController::class, 'destroy']);//v
 
     // quản lý nhân viên
     Route::get('/nhanvien', [NhanVienController::class, 'index']);
@@ -83,11 +89,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/checkout', [DonhangController::class, 'checkout']);
     Route::get('/donhang/{id}', [DonhangController::class, 'show']);
     Route::delete('/donhang/{id}', [DonhangController::class, 'huydon']);
-
-    // chi tiết giỏ hàng
-    Route::post('/chitietgiohang/them', [GioHang_ItemController::class, 'themVaoGio']);
-    Route::put('/chitietgiohang/{sach}', [GioHang_ItemController::class, 'capNhatSoLuong']);
-    Route::delete('/chitietgiohang/{sach}', [GioHang_ItemController::class, 'xoaChiTiet']);
+    Route::patch('/donhang/{id}', [DonhangController::class, 'updateStatus']);
+    
+    Route::post('/chitietgiohang/them', [GioHang_ItemController::class, 'themVaoGio']);//v
+    Route::put('/chitietgiohang/{sach}', [GioHang_ItemController::class, 'capNhatSoLuong']);//v
+    Route::delete('/chitietgiohang/{sach}', [GioHang_ItemController::class, 'xoaChiTiet']);//v
+    //sepay
+    Route::post('/webhook/sepay', [DonHangController::class, 'handleSePayWebhook']);
 });
 
 

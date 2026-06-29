@@ -68,7 +68,6 @@ const Cart = () => {
 
     setUpdating(idSach);
     
-    // Cập nhật tạm thời trên UI để mượt mà
     setCartItems(prev => (prev || []).map(cartItem => {
       const cartItemId = cartItem.sach?.sach_id || cartItem.sach;
       return cartItemId === idSach
@@ -80,7 +79,7 @@ const Cart = () => {
       console.log(`>>> [DEBUG API] Đang gọi API update sản phẩm ID: ${idSach} với số lượng mới: ${newQty}`);
       
       // 🛠️ CHỖ NÀY QUAN TRỌNG NHẤT: Phải truyền số idSach, KHÔNG ĐƯỢC truyền nguyên chữ 'item'
-      await cartAPI.updateQuantity(idSach, newQty); 
+      await cartAPI.updateQuantity(idSach, newQty);
       
       console.log('>>> [DEBUG API] Cập nhật số lượng thành công!');
     } catch (err) {
@@ -171,15 +170,13 @@ const Cart = () => {
                   {loadingCart
                     ? [...Array(3)].map((_, i) => <SkRow key={i} />)
                     : currentItems.map((item, idx) => {
-                        console.log(`>>> [DEBUG RENDER ROW #${idx}]`, item);
                         return (
                           <div key={item.sach_id || idx} className={`crt-row${idx < currentItems.length - 1 ? ' crt-row-sep' : ''}`}>
                             <div className="crt-item-info">
-                              {/* 🛠️ ĐÃ FIX: Điều hướng chuẩn theo item.sach_id */}
-                              <Link to={`/product/${item.sach_id}`} className="crt-img-wrap">
+                              <Link to={`/product/${item.sach?.sach_id}`} className="crt-img-wrap">
                                 <img
-                                  src={getImageUrl(item.sach?.anh_bia)} // 🛠️ ĐÃ FIX: Chỉ dùng trường anh_bia đồng bộ Cloudinary
-                                  alt={item.sach?.ten_sach || 'Sách'} 
+                                  src={getImageUrl(item.sach?.anh_bia)}
+                                  alt={item.sach?.ten_sach || 'Sách'}
                                   className="crt-img"
                                   onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x600/e2e8f0/475569?text=Chua+co+anh'; }}
                                   referrerPolicy="no-referrer"
@@ -187,7 +184,7 @@ const Cart = () => {
                               </Link>
                               <div className="crt-meta">
                                 {/* 🛠️ ĐÃ FIX: Chỉ dùng trường ten_sach dạng snake_case */}
-                                <Link to={`/product/${item.sach_id}`} className="crt-name">
+                                <Link to={`/product/${item.sach?.sach_id}`} className="crt-name">
                                   {item.sach?.ten_sach || `Sản phẩm #${item.sach_id}`}
                                 </Link>
                                 {item.sach?.tac_gia && <span className="crt-author">{item.sach.tac_gia}</span>}

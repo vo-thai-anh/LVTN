@@ -13,6 +13,8 @@ class DonHangItem extends Model
         'so_luong',
         'don_gia',
         'thanh_tien',
+        'don_hang',
+        'sach',
     ];
     public $incrementing = true;
     public $timestamps = false;

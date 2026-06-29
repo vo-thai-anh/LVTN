@@ -25,6 +25,7 @@ import About from './pages/user/About';
 import Contact from './pages/user/Contact';
 import AdminApp from './pages/admin/AdminApp';
 import ProtectedRoute from './components/ProtectedRoute';
+import PaymentGateway from './pages/user/Payment';
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
@@ -71,6 +72,7 @@ const AnimatedRoutes = () => {
         <Route path="/orders/:id" element={<PageWrapper><OrderDetail /></PageWrapper>} />
         <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
         <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />
+        <Route path="/payment-gateway" element={<PageWrapper><PaymentGateway /></PageWrapper>} />
         
         {/* Protected Admin Routes */}
         <Route
@@ -103,9 +105,17 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <Router>
-          <MainLayout>
-            <AnimatedRoutes />
-          </MainLayout>
+          <Routes>
+            {/* Các route cần Header/Footer */}
+            <Route path="/*" element={
+              <MainLayout>
+                <AnimatedRoutes />
+              </MainLayout>
+            } />
+            
+            {/* Route thanh toán riêng biệt, không có Header/Footer */}
+            <Route path="/payment-gateway" element={<PaymentGateway />} />
+          </Routes>
         </Router>
       </CartProvider>
     </AuthProvider>

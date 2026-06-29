@@ -51,10 +51,12 @@ const Orders = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate('/login'); return; }
+    
     orderAPI.getOrders()
       .then(res => {
-        // Laravel index() returns raw array of orders
-        setOrders(res || []);
+        console.log('>>> [DEBUG] Dữ liệu đơn hàng nhận được:', res);
+        const data = res?.data || res || [];
+        setOrders(Array.isArray(data) ? data : []);
       })
       .catch(() => toast.error('Không thể tải danh sách đơn hàng.'))
       .finally(() => setLoading(false));
@@ -69,81 +71,61 @@ const Orders = () => {
   return (
     <div className="ds-page">
       <div className="ds-wrap">
-        {/* Tiêu đề */}
-        <div className="ds-page-hd">
-          <h1 className="ds-page-title"><Package size={24} />Quản lý đơn hàng</h1>
-          <p className="ds-page-sub">Xem lịch sử và trạng thái theo dõi đơn hàng của bạn</p>
-        </div>
+        {/* ... */}
+        {orders.map(order => (
+          <div key={order.don_hang_id} className="ds-card ords-card">
+            <div className="ords-card-hd">
+              <div className="ords-card-id">
+                <span className="ords-id-label">Đơn hàng</span>
+                <span className="ords-id-val">#{order.don_hang_id}</span>
+              </div>
+              <StatusBadge status={order.trang_thai} />
+            </div>
 
-        {orders.length === 0 ? (
-          <div className="ds-card ords-empty-wrap">
-            <FileText size={52} className="ords-empty-icon" />
-            <h2 className="ords-empty-title">Bạn chưa có đơn hàng nào</h2>
-            <p className="ords-empty-sub">Hãy bắt đầu mua sắm để tạo đơn hàng đầu tiên!</p>
-            <button onClick={() => navigate('/category')} className="ds-btn-primary ords-empty-btn">
-              Bắt đầu mua sắm
-            </button>
-          </div>
-        ) : (
-          <div className="ords-list">
-            {orders.map(order => (
-              <div key={order.id} className="ds-card ords-card">
-                {/* Header */}
-                <div className="ords-card-hd">
-                  <div className="ords-card-id">
-                    <span className="ords-id-label">Đơn hàng</span>
-                    <span className="ords-id-val">#{order.id}</span>
-                  </div>
-                  <StatusBadge status={order.trang_thai} />
+            <div className="ords-card-body">
+              <div className="ords-info-grid">
+                <div className="ords-info-item">
+                  <Calendar size={13} className="ords-ico" />
+                  <span className="ords-info-label">Ngày đặt:</span>
+                  <span className="ords-info-val">{fmtDate(order.ngay_tao)}</span>
                 </div>
-
-                {/* Body */}
-                <div className="ords-card-body">
-                  <div className="ords-info-grid">
-                    <div className="ords-info-item">
-                      <Calendar size={13} className="ords-ico" />
-                      <span className="ords-info-label">Ngày đặt:</span>
-                      <span className="ords-info-val">{fmtDate(order.ngay_tao)}</span>
-                    </div>
-                    <div className="ords-info-item">
-                      <Package size={13} className="ords-ico" />
-                      <span className="ords-info-label">Người nhận:</span>
-                      <span className="ords-info-val">{order.ten_nguoi_nhan} · {order.sdt_nguoi_nhan}</span>
-                    </div>
-                    <div className="ords-info-item">
-                      <CreditCard size={13} className="ords-ico" />
-                      <span className="ords-info-label">Thanh toán:</span>
-                      <span className="ords-info-val">{order.phuong_thuc_thanh_toan}</span>
-                    </div>
-                  </div>
+                <div className="ords-info-item">
+                  <Package size={13} className="ords-ico" />
+                  <span className="ords-info-label">Người nhận:</span>
+                  <span className="ords-info-val">{order.ten_nguoi_nhan} · {order.sdt_nguoi_nhan}</span>
                 </div>
-
-                {/* Footer */}
-                <div className="ords-card-ft">
-                  <div className="ords-total-wrap">
-                    <span className="ords-total-label">Tổng cộng</span>
-                    <span className="ords-total-val">{fmt(order.thanh_tien || order.tong_tien)}</span>
-                  </div>
-                  <div className="ords-actions-wrap">
-                    {order.trang_thai === 'CHỜ_XÁC_NHẬN' && (
-                      <button
-                        className="ords-cancel-btn"
-                        onClick={() => handleCancelOrder(order.id)}
-                        disabled={cancelingId === order.id}
-                      >
-                        {cancelingId === order.id ? <Loader size={14} className="ds-spin" /> : <XCircle size={14} />}
-                        Hủy đơn
-                      </button>
-                    )}
-                    <Link to={`/orders/${order.id}`} className="ords-detail-btn">
-                      Xem chi tiết <ChevronRight size={14} />
-                    </Link>
-                  </div>
+                <div className="ords-info-item">
+                  <CreditCard size={13} className="ords-ico" />
+                  <span className="ords-info-label">Thanh toán:</span>
+                  <span className="ords-info-val">{order.thanhtoan?.phuong_thuc?.mo_ta|| 'Chưa xác định'}</span>
                 </div>
               </div>
-            ))}
+            </div>
+
+            <div className="ords-card-ft">
+              <div className="ords-total-wrap">
+                <span className="ords-total-label">Tổng cộng</span>
+                {/* Dùng tong_tien thay vì thanh_tien nếu Backend lưu như vậy */}
+                <span className="ords-total-val">{fmt(order.tong_tien)}</span>
+              </div>
+              <div className="ords-actions-wrap">
+                {order.trang_thai === 'CHỜ_XÁC_NHẬN' && (
+                  <button
+                    className="ords-cancel-btn"
+                    onClick={() => handleCancelOrder(order.don_hang_id)}
+                    disabled={cancelingId === order.don_hang_id}
+                  >
+                    {cancelingId === order.don_hang_id ? <Loader size={14} className="ds-spin" /> : <XCircle size={14} />}
+                    Hủy đơn
+                  </button>
+                )}
+                <Link to={`/orders/${order.don_hang_id}`} className="ords-detail-btn">
+                  Xem chi tiết <ChevronRight size={14} />
+                </Link>
+              </div>
+            </div>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );

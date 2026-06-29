@@ -36,14 +36,15 @@ const Login = () => {
                 localStorage.setItem('user', JSON.stringify(res.user));
 
             }
-          toast.success('Đăng nhập thành công!');
           const detail = res.user?.thong_tin_chi_tiet || {};
           const rawRole = res.user?.loai_nguoi_dung || detail.loai_nguoi_dung;
-          if (String(rawRole) === '2') {
+          const role = Number(rawRole);
+          if (String(role) ==='1') {
               navigate('/admin');
           } else {
               navigate('/');
           }
+          toast.success('Đăng nhập thành công!');
       } catch (err) {
           // Interceptor của bạn trả về err là response.data
           if (err?.errors) {

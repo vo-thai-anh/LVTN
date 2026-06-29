@@ -16,7 +16,6 @@ import heroBanner from '../../assets/banner/anhnen.jpg';
 /* ─────────────────────────────────────────── helpers ── */
 const fmtPrice = (n) => new Intl.NumberFormat('vi-VN').format(n || 0);
 
-/* ─────────────────────────────────────────── section header ── */
 const SecHead = ({ title, linkTo }) => (
   <div className="hx-sec-hd">
     <div className="hx-sec-hd-left">
@@ -132,7 +131,7 @@ const Home = () => {
 
   const handlePill = (cat) => {
     setActiveCat(cat || null);
-    filterByCat(cat ? cat.id : null);
+    filterByCat(cat ? cat.loai_sach_id : null);
   };
 
   const visibleBooks = activeCat ? filtBooks : newBooks;
@@ -199,8 +198,8 @@ const Home = () => {
           {/* Các danh mục từ DB */}
           {(categories || []).map(c => (
             <button
-              key={c.id}
-              className={`hx-ql-item${activeCat?.id === c.id ? ' hx-ql-active' : ''}`}
+              key={c.loai_sach_id}
+              className={`hx-ql-item${activeCat?.loai_sach_id === c.loai_sach_id ? ' hx-ql-active' : ''}`}
               onClick={() => handlePill(c)}>
               <div className="hx-ql-ico">
                 {QUICK_LINKS.find(q =>
@@ -220,7 +219,7 @@ const Home = () => {
         <div className="hx-block">
           <SecHead
             title={activeCat ? activeCat.ten_loai.toUpperCase() : 'SÁCH MỚI NHẤT'}
-            linkTo={activeCat ? `/category?loai=${activeCat.id}` : '/category'}
+            linkTo={activeCat ? `/category?loai=${activeCat.loai_sach_id}` : '/category'}
           />
           {error ? (
             <div className="hx-err">
@@ -240,9 +239,9 @@ const Home = () => {
 
         {/* ── Spotlight sections – chỉ hiện khi KHÔNG lọc danh mục ── */}
         {!activeCat && (spotCats || []).map((cat) => (
-          <div key={cat.id} className="hx-block">
-            <SecHead title={cat.ten_loai.toUpperCase()} linkTo={`/category?loai=${cat.id}`} />
-            <CatSection catId={cat.id} count={5} />
+          <div key={cat.loai_sach_id} className="hx-block">
+            <SecHead title={cat.ten_loai.toUpperCase()} linkTo={`/category?loai=${cat.loai_sach_id}`} />
+            <CatSection catId={cat.loai_sach_id} count={5} />
           </div>
         ))}
 

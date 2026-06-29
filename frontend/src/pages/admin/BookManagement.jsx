@@ -59,26 +59,19 @@ const BookManagement = () => {
         AdminAPI.getBooks({ search: searchTerm, page: page, size: 8 }),
         AdminAPI.getCategories()
       ]);
-      
-      // console.log("Dữ liệu gốc nhận về từ Service API:", booksRes);
-      
-      // 📝 CẬP NHẬT LẠI ĐOẠN ĐỌC DỮ LIỆU TẠI ĐÂY:
       if (booksRes && booksRes.content) {
-        // Trích xuất chính xác mảng danh sách từ thuộc tính 'content'
         setBooks(booksRes.content); 
         setTotalPages(booksRes.totalPages || 1);
       } else if (booksRes && booksRes.data) {
-        // Phương án dự phòng nếu Backend trả về dạng bọc gốc .data.data
         setBooks(Array.isArray(booksRes.data.data) ? booksRes.data.data : booksRes.data);
         setTotalPages(booksRes.last_page || 1);
       } else if (Array.isArray(booksRes)) {
         setBooks(booksRes);
         setTotalPages(1);
       } else {
-        setBooks([]); // Đảm bảo luôn trả về mảng rỗng nếu không khớp cấu trúc nào
+        setBooks([]);
       }
 
-      // Logic xử lý danh mục thể loại (giữ nguyên hoặc bọc an toàn tương tự)
       if (catsRes && catsRes.data) {
         setCategories(Array.isArray(catsRes.data) ? catsRes.data : []);
       } else {
@@ -129,7 +122,7 @@ const BookManagement = () => {
     }
     setShowModal(true);
   };
-    console.log("Dữ liệu sách đang được chỉnh sửa:", editingBook);
+  console.log("Dữ liệu sách đang được chỉnh sửa:", editingBook);
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -162,7 +155,7 @@ const BookManagement = () => {
       formPayload.append('nha_xuat_ban', formData.nha_xuat_ban || '');
       formPayload.append('gia', parseFloat(formData.gia) || 0);
       formPayload.append('so_luong_ton', parseInt(formData.so_luong_ton) || 0);
-      formPayload.append('loai_sach', categoryId); // ID số nguyên sạch sẽ đã check ở trên
+      formPayload.append('loai_sach', categoryId);
       formPayload.append('mo_ta', formData.mo_ta || '');
       formPayload.append('trang_thai', parseInt(formData.trang_thai));
       formPayload.append('trong_luong', parseInt(formData.trong_luong) || 0);
@@ -170,18 +163,15 @@ const BookManagement = () => {
       formPayload.append('kich_thuoc', formData.kich_thuoc || '');
       formPayload.append('nha_cung_cap', formData.nha_cung_cap || '');
 
-      // Kiểm tra file ảnh bìa
       if (selectedFile) {
         formPayload.append('anh_bia_file', selectedFile);
       } else if (editingBook && formData.anh_bia) {
         formPayload.append('anh_bia', formData.anh_bia);
       }
 
-      // In thử ra màn hình console ở Frontend xem các trường có đầy đủ không
       console.log("Dữ liệu thực tế gửi đi:", Object.fromEntries(formPayload));
 
       if (editingBook) {
-        // Truyền formPayload trực tiếp sang service
         await AdminAPI.updateBook(editingBook.id, formPayload);
         toast.success('Cập nhật sản phẩm thành công!', { id: loadingToast });
       } else {
@@ -265,13 +255,8 @@ const BookManagement = () => {
             ) : (
               books.map((book, idx) => {
                 const rowKey = book?.id ? `book-row-${book.id}` : `book-idx-${idx}`;
-                
-                // Log thử 1 dòng đầu tiên ra tab Console để bạn kiểm tra tên các trường chính xác từ DB
-                // if (idx === 0) console.log("Cấu trúc 1 cuốn sách nhận từ Backend:", book);
-
                 return (
                   <tr key={rowKey}>
-                    {/* Cột 1: Thông tin Sản phẩm */}
                     <td>
                       <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                         <div style={{ width: '40px', height: '56px', background: '#f0f0f0', borderRadius: '2px', overflow: 'hidden', flexShrink: 0 }}>
@@ -314,10 +299,10 @@ const BookManagement = () => {
                     <td className="text-center">
                       <span style={{
                         fontSize: '11px', fontWeight: 500, padding: '4px 12px', borderRadius: '12px',
-                        background: Number(book?.trang_thai) === 1 ? '#e6fffa' : '#fff5f5',
-                        color: Number(book?.trang_thai) === 1 ? '#047481' : '#c53030'
+                        background: Number(book?.trangThai) === 1 ? '#e6fffa' : '#fff5f5',
+                        color: Number(book?.trangThai) === 1 ? '#047481' : '#c53030'
                       }}>
-                        {Number(book?.trang_thai) === 1 ? 'Ổn định' : 'Ngưng bán'}
+                        {Number(book?.trangThai) === 1 ? 'Còn Hàng' : 'Ngưng bán'}
                       </span>
                     </td>
 

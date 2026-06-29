@@ -6,10 +6,13 @@ use App\Http\Controllers\API\Controller;
 use App\Models\DonHang;
 use App\Models\DonHangItem;
 use App\Models\GioHang;
+use App\Models\KhachHang;
+use App\Models\PhuongThucThanhToan;
 use App\Models\Sach;
 use App\Models\ThanhToan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class DonHangController extends Controller
@@ -17,116 +20,160 @@ class DonHangController extends Controller
     public function checkout(Request $request)
     {
         $validated = $request->validate([
-            'ho_ten'                 => 'required|string|max:255',
-            'so_dien_thoai'          => 'required|string|max:20',
-            'dia_chi'                => 'required|string|max:255',
-            'phuong_thuc_thanh_toan' => 'required|in:transfer,cod',
-            'ghi_chu'                => 'nullable|string'
+            'ho_ten'                => 'required|string|max:255',
+            'so_dien_thoai'         => 'required|string|max:20',
+            'dia_chi'               => 'required|string|max:255',
+            'phuong_thuc_thanh_toan'=> 'required|exists:phuongthucthanhtoan,ten',
+            'ghi_chu'               => 'nullable|string'
         ]);
-        $khachHangId = $request->user()->khach_hang_id ?? $request->user()->id;
-        $giohang = GioHang::with('chitietgiohangs.sach')
-            ->where('khach_hang_id', $khachHangId)
-            ->first();
-        if (!$giohang || $giohang->chitietgiohangs->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Giỏ hàng của bạn đang trống!'
-            ], 400);
-        }
+        $khachHang = KhachHang::where('tai_khoan_id', $request->user()->tai_khoan_id)->first();
+        if (!$khachHang) return response()->json(['success' => false, 'message' => 'Khách hàng không tồn tại!'], 404);
+        $giohang = GioHang::with(['giohangitem.Sach'])->where('khach_hang_id', $khachHang->khach_hang_id)->first();
+        if (!$giohang || $giohang->giohangitem->isEmpty()) return response()->json(['success' => false, 'message' => 'Giỏ hàng trống!'], 400);
         try {
             DB::beginTransaction();
-
             $tongTien = 0;
             $tongSoLuongSach = 0;
-            // Vòng lặp 1: Tính toán tổng tiền hóa đơn
-            foreach ($giohang->chitietgiohangs as $item) {
-                if (!$item->sach) {
-                    throw new \Exception("Có sản phẩm trong giỏ hàng không còn tồn tại hệ thống.");
-                }
-                $giaHienTai = $item->sach->gia ?? $item->don_gia; // Sử dụng cột 'gia' từ Model Sach
-                $tongTien += $giaHienTai * $item->so_luong;
+            foreach ($giohang->giohangitem as $item) {
+                $gia = $item->Sach->gia ?? $item->don_gia;
+                $tongTien += $gia * $item->so_luong;
                 $tongSoLuongSach += $item->so_luong;
             }
-            // Tạo mã đơn hàng dạng Chuỗi ngẫu nhiên (Ví dụ: DH837194) vì $keyType = 'string'
-            $newDonHangId = 'DH' . strtoupper(Str::random(8));
-            // Khởi tạo bản ghi Đơn hàng mới
+            $phuongThuc = PhuongThucThanhToan::where('ten', $validated['phuong_thuc_thanh_toan'])->first();
+            if (!$phuongThuc) {
+                throw new \Exception("Phương thức thanh toán không hợp lệ!");
+            }
             $donhang = DonHang::create([
-                'don_hang_id'       => $newDonHangId,
-                'khach_hang'        => $khachHangId,
-                'tong_tien'         => $tongTien,
-                'thanh_tien'        => $tongTien,
-                'so_tien_giam'      => 0,
-                'trang_thai'        => 'CHỜ_XÁC_NHẬN',
-                'ten_nguoi_nhan'    => $validated['ho_ten'],
-                'sdt_nguoi_nhan'    => $validated['so_dien_thoai'],
-                'dia_chi_giao_hang' => $validated['dia_chi'],
-                'so_luong_sach'     => $tongSoLuongSach,
-                'ghi_chu'           => $validated['ghi_chu'] ?? null,
-                'ngay_tao'          => now(),
+            'khach_hang'        => $khachHang->khach_hang_id,
+            'gio_hang'          => $giohang->gio_hang_id,
+            'tong_tien'         => $tongTien,
+            'thanh_tien'        => $tongTien,
+            'trang_thai'        => 'CHỜ_XÁC_NHẬN',
+            'ten_nguoi_nhan'    => $validated['ho_ten'],
+            'sdt_nguoi_nhan'    => $validated['so_dien_thoai'],
+            'dia_chi_giao_hang' => $validated['dia_chi'],
+            'so_luong_sach'     => $tongSoLuongSach,
+            'ghi_chu'           => $validated['ghi_chu'] ?? null,
+            'ngay_tao'          => now(),
+        ]);
+            $thanhToan = ThanhToan::create([
+                'don_hang'       => $donhang->don_hang_id,
+                'phuong_thuc_id' => $phuongThuc->phuong_thuc_id,
+                'so_tien'        => $tongTien,
+                'trang_thai'     => 0,
+                'ngay_tao'       => now()
             ]);
-            // Vòng lặp 2: Trừ kho bằng Pessimistic Locking và tạo chi tiết hóa đơn
-            foreach ($giohang->chitietgiohangs as $item) {
-                // Khóa dòng dữ liệu để tránh xung đột thao tác đồng thời (Race Condition)
-                $sach = Sach::lockForUpdate()->find($item->sach_id);
-                // Đồng bộ kiểm tra trường 'so_luong_ton' chuẩn Model Sach
-                if (!$sach || $sach->so_luong_ton < $item->so_luong) {
-                    throw new \Exception("Sách '{$item->sach->ten_sach}' đã hết hàng hoặc không đủ số lượng cung cấp.");
-                }
-                // Trừ số lượng tồn kho của cuốn sách
+
+            $donhang->update(['thanh_toan' => $thanhToan->thanh_toan_id]);
+            $sachIds = $giohang->giohangitem->pluck('sach');
+            $danhSachSach = Sach::whereIn('sach_id', $sachIds)->lockForUpdate()->get()->keyBy('sach_id');
+
+            foreach ($giohang->giohangitem as $item) {
+                $sach = $danhSachSach->get($item->sach);
+                if (!$sach || $sach->so_luong_ton < $item->so_luong)
+                    throw new \Exception("Sách '{$sach->ten_sach}' không đủ số lượng!");
                 $sach->decrement('so_luong_ton', $item->so_luong);
-                // Tạo chi tiết mặt hàng đơn đặt
                 DonHangItem::create([
-                    'don_hang_id' => $donhang->don_hang_id, // Sử dụng don_hang_id thay vì id
-                    'sach_id'     => $item->sach_id,
+                    'don_hang'    => $donhang->don_hang_id,
+                    'sach'        => $item->sach,
                     'so_luong'    => $item->so_luong,
-                    'don_gia'     => $item->sach->gia ?? $item->don_gia,
-                    'thanh_tien'  => ($item->sach->gia ?? $item->don_gia) * $item->so_luong
+                    'don_gia'     => $sach->gia,
+                    'thanh_tien'  => $sach->gia * $item->so_luong
                 ]);
             }
-            // Ghi nhận trạng thái thanh toán ban đầu cho đơn hàng
-            ThanhToan::create([
-                'don_hang_id' => $donhang->don_hang_id,
-                'phuong_thuc' => strtoupper($validated['phuong_thuc_thanh_toan']),
-                'so_tien'     => $tongTien,
-                'trang_thai'  => 'CHUA_THANH_TOAN',
-                'ngay_tao'    => now()
-            ]);
-            // Dọn sạch hoàn toàn các mặt hàng trong giỏ sau khi mua thành công
-            $giohang->chitietgiohangs()->delete();
+
+            $giohang->giohangitem()->delete();
             DB::commit();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Đặt hàng thành công!',
-                'don_hang_id' => $donhang->don_hang_id
+                'don_hang_id' => $donhang->don_hang_id,
+                'noi_dung_ck' => "SEVQR " . $donhang->don_hang_id
             ], 201);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Quá trình đặt hàng thất bại: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    public function handleSePayWebhook(Request $request)
+    {
+        $content = $request->input('content');
+        if (!$content) {
+            return response()->json(['status' => 'error', 'message' => 'No content'], 400);
+        }
+        $donHangId = str_replace('SEVQR ', '', $content);
+        $donHang = DonHang::find($donHangId);
+        if ($donHang) {
+            $donHang->update(['trang_thai' => 'DA_THANH_TOAN']);
+            if ($donHang->thanhToan) {
+                $donHang->thanhToan->update(['trang_thai' => 1]);
+            }
+        }
+        return response()->json(['status' => 'success']);
+    }
+
     public function index(Request $request)
     {
-        $khachHangId = $request->user()->khach_hang_id ?? $request->user()->id;
-        // Sửa liên kết từ 'chitietdonhangs' thành 'giohang' hoặc tên quan hệ chi tiết mặt hàng tương ứng của bạn
-        $donhangs = DonHang::with('thanhtoan')
-            ->where('khach_hang', $khachHangId) // Khớp cột 'khach_hang'
-            ->orderBy('ngay_tao', 'desc')
-            ->get();
-        return response()->json([
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Chưa xác thực'], 401);
+            }
+            $user->load('loaiNguoiDung');
+
+            if ($user->loaiNguoiDung && $user->loaiNguoiDung->ten === 'Admin') {
+                $donhangs = DonHang::with('khachHang')
+                                    ->orderBy('ngay_tao', 'desc')
+                                    ->get();
+            }
+            else{
+                $khachHang = KhachHang::where('tai_khoan_id', $user->tai_khoan_id)->first();
+                if (!$khachHang) {
+                return response()->json(['success' => false, 'message' => 'Không tìm thấy thông tin khách hàng'], 404);
+                }
+                        $donhangs = DonHang::with('khachHang','thanhtoan.phuongThuc')
+                                ->where('khach_hang', $khachHang->khach_hang_id)
+                                ->orderBy('ngay_tao', 'desc')
+                                ->get();
+            }
+            return response()->json([
             'success' => true,
-            'data'    => $donhangs
+            'data' => $donhangs
         ]);
     }
     public function show(Request $request, $id)
     {
-        $khachHangId = $request->user()->khach_hang_id ?? $request->user()->id;
+        $user = $request->user();
 
-        $donhang = DonHang::with('thanhtoan')
-            ->where('khach_hang', $khachHangId)
-            ->findOrFail($id); 
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Chưa xác thực'], 401);
+        }
+
+        $user->load('loaiNguoiDung');
+
+        $query = DonHang::with('khachHang','chitiet.Sach','thanhtoan.phuongThuc');
+
+        if ($user->loaiNguoiDung && $user->loaiNguoiDung->ten === 'Admin') {
+            $donhang = $query->find($id);
+        } else {
+            $khachHang = KhachHang::where('tai_khoan_id', $user->tai_khoan_id)->first();
+            if (!$khachHang) {
+                return response()->json(['success' => false, 'message' => 'Không tìm thấy thông tin khách hàng'], 404);
+            }
+
+            $donhang = $query->where('khach_hang', $khachHang->khach_hang_id)
+                            ->where('don_hang_id', $id)
+                            ->first();
+        }
+
+        if (!$donhang) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng không tồn tại hoặc bạn không có quyền truy cập.'
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
@@ -140,7 +187,7 @@ class DonHangController extends Controller
         // Truy vấn đơn hàng ở trạng thái cho phép hủy
         $donhang = DonHang::where('khach_hang', $khachHangId)
             ->where('don_hang_id', $id)
-            ->whereIn('trang_thai', ['CHỜ_XÁC_NHẬN', 'ĐÃ_XÁC_NHẬN'])
+            ->whereIn('trang_thai', ['CHỜ_XÁC_NHẬN'])
             ->first();
 
         if (!$donhang) {
@@ -177,5 +224,38 @@ class DonHangController extends Controller
                 'message' => 'Quá trình hủy đơn hàng thất bại: ' . $e->getMessage()
             ], 500);
         }
+    }
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'trang_thai' => 'required|string',
+        ]);
+        $donHang = DonHang::findOrFail($id);
+        $currentStatus = $donHang->trang_thai ?? 'CHỜ_XÁC_NHẬN';
+        $newStatus = $request->trang_thai;
+
+        $allowedTransitions = [
+            'CHỜ_XÁC_NHẬN'   => ['ĐANG_GIAO_HÀNG', 'ĐÃ_HỦY'],
+            'ĐANG_GIAO_HÀNG' => ['ĐÃ_GIAO_HÀNG'],
+            'ĐÃ_GIAO_HÀNG'   => [],
+            'ĐÃ_HỦY'         => [],
+        ];
+
+        if ($currentStatus === $newStatus) {
+            return response()->json(['message' => 'Đơn hàng đã ở trạng thái này rồi'], 200);
+        }
+        if (!isset($allowedTransitions[$currentStatus]) || !in_array($newStatus, $allowedTransitions[$currentStatus])) {
+            return response()->json([
+                'message' => "Không thể chuyển đơn hàng từ {$currentStatus} sang {$newStatus}"
+            ], 400);
+        }
+
+        $donHang->trang_thai = $newStatus;
+        $donHang->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật trạng thái thành công'
+        ]);
     }
 }

@@ -12,6 +12,7 @@ class NhanVien extends Model
     protected $fillable = [
         'ten_nhan_vien',
         'nam_sinh',
+        'email',
         'gioi_tinh',
         'so_dien_thoai',
         'dia_chi',

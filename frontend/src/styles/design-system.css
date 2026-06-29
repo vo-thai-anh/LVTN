@@ -144,11 +144,11 @@
 
 /* ── Button primary ── */
 .ds-btn-primary {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
+  width: auto;
   padding: 0.7rem 1.5rem;
   background: var(--ds-navy);
   color: #fff;
@@ -165,7 +165,7 @@
 
 /* ── Button outline ── */
 .ds-btn-outline {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -183,6 +183,47 @@
 .ds-btn-outline:hover:not(:disabled) { background: #eff6ff; }
 .ds-btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* --- Button Success (Dùng cho nút Xác nhận) --- */
+.ds-btn-success {
+    background: var(--ds-green, #28a745);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ds-btn-success:hover {
+    background: var(--ds-green-dark, #218838);
+}
+
+/* --- Button Danger (Dùng cho nút Hủy) --- */
+.ds-btn-danger {
+    background: var(--ds-red, #dc3545); /* Thay màu đỏ của bạn nếu có biến css */
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ds-btn-danger:hover {
+    background: var(--ds-red-dark, #c82333);
+}
+td .ds-btn,
+td .ds-btn-primary,
+td .ds-btn-success,
+td .ds-btn-danger {
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    height: 32px;
+    line-height: 1;
+    border-radius: 6px !important;
+}
 /* ── Spinner ── */
 @keyframes ds-spin { to { transform: rotate(360deg); } }
 .ds-spin { animation: ds-spin .8s linear infinite; flex-shrink: 0; }

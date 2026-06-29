@@ -50,40 +50,39 @@ const Field = ({ ico: Ico, id, label, type='text', rows, form, errors, touched, 
   );
 };
 
-const Checkout = () => {
-  const { user, login: authLogin, loading: authLoading } = useAuth();
-  const { cartItems, loadingCart, fetchCart } = useCart();
-  const navigate      = useNavigate();
+  const Checkout = () => {
+    const { user, login: authLogin } = useAuth();
+    const { cartItems, loadingCart, fetchCart } = useCart();
+    const navigate = useNavigate();
+    const [orderResult, setOrderResult] = useState(null);
+    const [orderInfo, setOrderInfo] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [payMethod, setPayMethod] = useState('ONLINE');
+    const [errors, setErrors] = useState({});
+    const [touched, setTouched] = useState({});
 
-  const [submitting, setSubmitting] = useState(false);
-  const [payMethod,  setPayMethod]   = useState('ONLINE');
-  const [errors,     setErrors]     = useState({});
-  const [touched,    setTouched]    = useState({});
-
-  const [form, setForm] = useState({
-    ten_nguoi_nhan: '',
-    sdt_nguoi_nhan: '',
-    dia_chi_giao_hang: '',
-    ghi_chu: '',
-  });
+    const [form, setForm] = useState({
+      ten_nguoi_nhan: '',
+      sdt_nguoi_nhan: '',
+      dia_chi_giao_hang: '',
+      ghi_chu: '',
+    });
 
   // Sync with user data when loaded
   useEffect(() => {
     if (user) {
-      setForm(prev => ({
-        ...prev,
-        ten_nguoi_nhan: user.ten_dang_nhap || '',
+      setForm({
+        ten_nguoi_nhan: user.ho_ten || user.ten_dang_nhap || '',
         sdt_nguoi_nhan: user.so_dien_thoai || '',
         dia_chi_giao_hang: user.dia_chi || '',
-      }));
+        ghi_chu: '',
+      });
     }
   }, [user]);
-
-  // ... (các hàm validate giữ nguyên)
   const validateAll = () => {
     const newErrors = {};
     Object.keys(validators).forEach(k => {
-      const err = validators[k](form[k]);
+      const err = validators[k](form[k] || '');
       if (err) newErrors[k] = err;
     });
     setErrors(newErrors);
@@ -96,48 +95,42 @@ const Checkout = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateAll()) { toast.error('Vui lòng kiểm tra lại thông tin'); return; }
-    if (!cartItems || cartItems.length === 0) { toast.error('Giỏ hàng trống'); return; }
+    if (!validateAll() || !cartItems.length) return;
 
     setSubmitting(true);
     try {
-      const payload = {
-        ho_ten: form.ten_nguoi_nhan,
-        so_dien_thoai: form.sdt_nguoi_nhan,
-        dia_chi: form.dia_chi_giao_hang,
-        ghi_chu: form.ghi_chu,
-        phuong_thuc_thanh_toan: payMethod === 'ONLINE' ? 'transfer' : 'cod'
-      };
-
-      const res = await orderAPI.checkout(payload);
-      if (res && res.success) {
-        // TỰ ĐỘNG CẬP NHẬT THÔNG TIN HỒ SƠ NẾU CÓ THAY ĐỔI
-        try {
-          const resSync = await userAPI.updateProfile(user.id, {
-            ten_dang_nhap: form.ten_nguoi_nhan,
+        const payload = {
+            ho_ten: form.ten_nguoi_nhan,
             so_dien_thoai: form.sdt_nguoi_nhan,
-            dia_chi:       form.dia_chi_giao_hang
-          });
+            dia_chi: form.dia_chi_giao_hang,
+            ghi_chu: form.ghi_chu,
+            phuong_thuc_thanh_toan: payMethod === 'ONLINE' ? 'TRANS' : 'COD'
+        };
 
-          // SYNC AUTH CONTEXT ĐỂ CẬP NHẬT GIAO DIỆN NGAY LẬP TỨC
-          if (resSync && resSync.data) {
-            const token = localStorage.getItem('token');
-            if (token) authLogin(resSync.data, token);
+        const res = await orderAPI.checkout(payload);
+
+      if (res && res.success) {
+          if (payMethod === 'ONLINE') {
+              navigate('/payment-gateway', {
+                  state: {
+                      orderId: res.don_hang_id,
+                      total: total,
+                      noi_dung: res.noi_dung_ck
+                  }
+              });
+          } else {
+              navigate('/confirm', { state: { orderId: res.don_hang_id } });
           }
-        } catch (err) {
-          console.error('Không thể tự động cập nhật hồ sơ:', err);
+            await fetchCart();
+        } else {
+            toast.error(res?.message || 'Có lỗi xảy ra');
         }
-
-        await fetchCart();
-        toast.success(res.message || 'Đặt hàng thành công!');
-        navigate('/confirm', { state: { orderId: res.don_hang_id } });
-      } else {
-        toast.error(res?.message || 'Có lỗi khi xử lý đơn hàng');
-      }
     } catch (err) {
-      toast.error(err.message || 'Lỗi khi đặt hàng');
-    } finally { setSubmitting(false); }
-  };
+        toast.error(err.message || 'Lỗi hệ thống');
+    } finally {
+        setSubmitting(false);
+    }
+};
 
   const total = (cartItems || []).reduce((s, i) => s + parseFloat(i.thanh_tien || 0), 0);
 
@@ -206,22 +199,29 @@ const Checkout = () => {
                 </label>
 
                 {/* QR Code box */}
-                {payMethod === 'ONLINE' && (
-                  <div className="ck-qr-box">
-                    <p className="ck-qr-hdr">Mã QR Thanh Toán</p>
-                    <img
-                      src={`https://img.vietqr.io/image/MB-0948342040-compact2.jpg?amount=${Math.round(total)}&addInfo=Thanh+toan+BookOne&accountName=VO+THAI+ANH`}
-                      alt="QR" className="ck-qr-img" onError={e => e.target.style.display = 'none'}
-                    />
+               {payMethod === 'ONLINE' && (
+              <div className="ck-qr-box">
+                {orderResult ? (
+                  <div className="ck-qr-success">
+                    <p className="ck-qr-hdr">Quét mã để thanh toán đơn hàng #{orderResult.don_hang_id}</p>
+
                     <div className="ck-qr-details">
-                      <div className="ck-qr-row"><span>Ngân hàng</span><strong>MB Bank</strong></div>
-                      <div className="ck-qr-row"><span>Số tài khoản</span><strong>0948342040</strong></div>
-                      <div className="ck-qr-row"><span>Chủ tài khoản</span><strong>VO THAI ANH</strong></div>
-                      <div className="ck-qr-row"><span>Số tiền</span><strong>{fmt(total)}</strong></div>
-                      <div className="ck-qr-row"><span>Nội dung</span><strong>Thanh toan BookOne</strong></div>
+                      <div className="ck-qr-row">
+                        <span>Nội dung CK</span>
+                        <strong style={{color: '#dc2626'}}>{orderResult.noi_dung_ck}</strong>
+                      </div>
+                      <p style={{fontSize: '12px', color: '#666', marginTop: '5px'}}>
+                        *Vui lòng giữ nguyên nội dung chuyển khoản để hệ thống tự xác nhận.
+                      </p>
                     </div>
                   </div>
+                ) : (
+                  <div className="ck-qr-placeholder">
+                    <p>Vui lòng nhấn "Xác nhận đặt hàng" để tạo mã QR thanh toán riêng cho đơn hàng của bạn.</p>
+                  </div>
                 )}
+              </div>
+            )}
                 {/* COD note */}
                 {payMethod === 'COD' && (
                   <div className="ck-cod-box">

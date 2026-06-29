@@ -25,7 +25,6 @@ return new class extends Migration
             $table->integer('so_luong_sach')->nullable();
             $table->foreignId('khach_hang')->references('khach_hang_id')->on('khachhang');
             $table->foreignId('gio_hang')->references('gio_hang_id')->on('giohang');
-            $table->foreignId('thanh_toan')->references('thanh_toan_id')->on('thanhtoan');
         });
     }
 

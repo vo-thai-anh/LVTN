@@ -24,17 +24,18 @@ class GioHang_ItemController extends Controller
             'so_luong.integer'  => 'Số lượng phải là số nguyên.',
             'so_luong.min'      => 'Số lượng mua tối thiểu là 1 cuốn.',
         ]);
-
         DB::beginTransaction();
         try {
             $user = $request->user();
             $taiKhoanId = $user->tai_khoan_id ?? $user->id;
             $khachHang = KhachHang::where('tai_khoan_id', $taiKhoanId)->first();
-            if ($khachHang) {
-                $khachHangId = $khachHang->khach_hang_id;
-            } else {
-                $khachHangId = null;
+            if (!$khachHang) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn cần cập nhật thông tin khách hàng để thực hiện giỏ hàng.'
+                ], 403);
             }
+            $khachHangId = $khachHang->khach_hang_id;
             $sachId      = $request->input('sach_id');
             $soLuongThem = (int) $request->input('so_luong');
             $sach = Sach::lockForUpdate()->findOrFail($sachId);

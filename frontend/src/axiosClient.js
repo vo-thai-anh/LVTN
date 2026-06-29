@@ -27,6 +27,7 @@ export const adminAxios = axios.create({
 const setupRequestInterceptor = (instance) => {
   instance.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
+    // console.log('>>> [DEBUG] Token trong LocalStorage:', token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -45,6 +46,7 @@ const setupResponseInterceptor = (instance) => {
       console.error('API Error:', error.response?.data || error.message);
     if(error.response?.status === 403) {
       // code rieng
+      console.error("Bạn không có quyền truy cập tính năng này.");
     }
       // Xử lý hết hạn token
       if (error.response?.status === 401 ) {

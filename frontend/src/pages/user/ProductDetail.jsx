@@ -66,7 +66,7 @@ const ErrorUI = ({ onRetry }) => (
 
 /* ══════════════ Related Card ══════════════ */
 const RelCard = ({ sach }) => (
-  <Link to={`/product/${sach.sach_id}`} className="pd3-rel-card">
+  <Link to={`/product/${sach?.sach_id}`} className="pd3-rel-card">
     <div className="pd3-rel-img">
       <img
         src={getImageUrl(sach.anh_bia)}
@@ -158,8 +158,6 @@ const ProductDetail = () => {
       }
     } catch (error) {
       console.error("❌ [DEBUG ADD TO CART ERROR]:", error);
-      
-      // Khắc phục an toàn: Kiểm tra sự tồn tại của error.response trước khi đọc .data
       if (error.response && error.response.status === 401) {
         needLogin();
       } else if (error.response && error.response.data) {
@@ -172,7 +170,6 @@ const ProductDetail = () => {
     }
   };
 
-  /* ── Mua ngay (Đã đồng bộ hóa đồng nhất với handleAdd) ── */
   const handleBuy = async () => {
     if (!user) return needLogin();
     if (!book) return;

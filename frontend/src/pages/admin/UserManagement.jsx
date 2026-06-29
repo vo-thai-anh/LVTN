@@ -25,6 +25,7 @@ const UserManagement = () => {
     ten_dang_nhap: '',
     mat_khau: '',
     email: '',
+    dia_chi: '',
     ten_nhan_vien: '',
     so_dien_thoai: '',
     chuc_vu: '',
@@ -62,50 +63,54 @@ const UserManagement = () => {
   }, [searchTerm]);
 
   const fetchData = async () => {
-    try {
-        setLoading(true);
-        // Gọi cả 2 API
-        const [userRes, nvRes] = await Promise.all([
-            AdminAPI.getUsers({ keyword: searchTerm, page: page, size: 8 }),
-            AdminAPI.getNhanViens()
-        ]);
-        
-        setUsers(userRes.content || userRes);
-        setNhanViens(nvRes);
-    } catch (err) {
-        toast.error('Lỗi tải dữ liệu');
-    } finally {
-        setLoading(false);
-    }
-};
+      try {
+          setLoading(true);
+          const [userRes, nvRes] = await Promise.all([
+              AdminAPI.getUsers({ keyword: searchTerm, page: page, size: 8 }),
+              AdminAPI.getNhanViens({ keyword: searchTerm, page: page, size: 8 })
+          ]);
+          console.log("Dữ liệu userRes nhận được:", userRes);
+          const dataList = userRes.data || userRes.content || userRes;
+          setUsers(Array.isArray(dataList) ? dataList : []); 
+          setTotalPages(userRes.totalPages || 0);
+          setNhanVien(nvRes); 
+      } catch (err) {
+          toast.error('Lỗi tải dữ liệu');
+          console.error(err);
+      } finally {
+          setLoading(false);
+      }
+  };
 
   const handleOpenModal = (user = null) => {
     if (user) {
       setEditingUser(user);
       setFormData({
-          tenDangNhap:user.ten_dang_nhap || '',
+          ten_dang_nhap:user.ten_dang_nhap || '',
           email: user.email || '',
-          matKhau:'',
-          soDienThoai: user.so_dien_thoai || '',
-          diaChi: user.dia_chi || '',
-          chucVu: user.chuc_vu || '',
+          mat_khau:'',
+          ten_nhan_vien: user.ten_nhan_vien || '',
+          so_dien_thoai: user.so_dien_thoai || '',
+          dia_chi: user.dia_chi || '',
+          chuc_vu: user.chuc_vu || '',
           loai_nguoi_dung:user.role|| '' ,
       });
     } else {
       setEditingUser(null);
       setFormData({
-          tenDangNhap: '',
+          ten_dang_nhap: '',
+          mat_khau: '',
           email: '',
-          matKhau: '',
-          soDienThoai: '',
-          diaChi: '',
-          hoTen: '',
-          chucVu: '',
-          loai_nguoi_dung: '' });
+          ten_nhan_vien: '',
+          so_dien_thoai: '',
+          dia_chi: '',
+          chuc_vu: '',
+          loai_nguoi_dung: ''
+    });
     }
     setShowModal(true);
   };
-  console.log(">>> [DEBUG DỮ LIỆU GỬI ĐI]:", formData);
+  // console.log(">>> [DEBUG DỮ LIỆU GỬI ĐI]:", formData);
 
     const handleSubmit = async (e) => {
       e.preventDefault();
@@ -117,33 +122,39 @@ const UserManagement = () => {
               ten_nhan_vien: formData.ten_nhan_vien,
               so_dien_thoai: formData.so_dien_thoai,
               chuc_vu: formData.chuc_vu,
+              dia_chi: formData.dia_chi,
               loai_nguoi_dung: parseInt(formData.loai_nguoi_dung)
           };
           console.log(">>> [PAYLOAD CHUẨN]:", payload);
       try {
-          console.log("Payload gửi đi:", payload)
-          await AdminAPI.addUser(payload);
-          console.log("Kết quả từ server:", response);
-          toast.success('Đã tạo thành viên thành công!');
-          setShowModal(false);
-          fetchData();
-      }  catch (err) {
-          console.log("--- BẮT ĐẦU GHI LỖI ---");
-          if (err.response) {
-              // Server trả về lỗi (4xx, 5xx)
-              console.error("Dữ liệu lỗi từ server:", err.response.data);
-              console.error("Trạng thái lỗi:", err.response.status);
-          } else if (err.request) {
-              // Request đã gửi nhưng không nhận được phản hồi
-              console.error("Không nhận được phản hồi từ server:", err.request);
-          } else {
-              console.log(err.message);
-              console.error("Lỗi:", err.message);
-          }
-      } finally {
-          setSubmitting(false);
-      }
-  };
+        await AdminAPI.addUser(payload);
+        toast.success("Thành công!");
+        setShowModal(false);
+        fetchData();
+      } catch (error) {
+        setSubmitting(false); 
+    if (error.response) {
+        const { status, data } = error.response;
+        console.error(`Lỗi API (${status}):`, data);
+        if (status === 422) {
+            const validationErrors = data.errors;
+            let errorMessage = "Dữ liệu không hợp lệ:\n";
+            for (let key in validationErrors) {
+                errorMessage += `- ${validationErrors[key].join(', ')}\n`;
+            }
+            toast.error(errorMessage);
+        } else {
+            toast.error(data.message || "Đã có lỗi xảy ra từ phía máy chủ.");
+        }
+    } else if (error.request) {
+        console.error("Không có phản hồi từ Server:", error.request);
+        toast.error("Không thể kết nối tới máy chủ.");
+    } else {
+        console.error("Lỗi cấu hình:", error.message);
+        toast.error("Lỗi hệ thống: " + error.message);
+    }
+    }
+  }
   const handleDelete = async (id) => {
     if (!window.confirm('Xác nhận xóa người dùng này?')) return;
     try {
@@ -204,21 +215,20 @@ const UserManagement = () => {
               </tr>
             ) : (
               Array.isArray(users) && users.map((user) => (
-                console.log(">>> [DEBUG DỮ LIỆU NHẬN VỀ]:", user) ||
                 <tr key={user?.id}>
                   <td>
                     <div>
-                      <div style={{ fontWeight: 500, color: 'var(--admin-text-head)', fontSize: '14px' }}>{user?.ten_dang_nhap || user?.ho_ten || 'Thành viên'}</div>
+                      <div style={{ fontWeight: 500, color: 'var(--admin-text-head)', fontSize: '14px' }}>{user?.hoTen || 'Thành viên'}</div>
                       <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>{user?.email}</div>
                     </div>
                   </td>
-                  <td style={{ fontSize: '13px' }}>{user?.so_dien_thoai || '—'}</td>
-                  <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px', color: 'var(--admin-text-muted)' }}>{user?.dia_chi || '—'}</td>
+                  <td style={{ fontSize: '13px' }}>{user?.soDienThoai || '—'}</td>
+                  <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px', color: 'var(--admin-text-muted)' }}>{user?.diaChi || '—'}</td>
                   <td className="text-center">
                     <span style={{
                       fontSize: '11px', fontWeight: 500, padding: '4px 10px', borderRadius: '4px',
                       background: (user?.role) === 'Admin' ? 'rgba(62, 106, 225, 0.1)' : 'var(--admin-bg-ash)',
-                      color: (user?.role) === 'Admin' ? 'var(--admin-primary)' : 'var(--admin-text-muted)'
+                      color: (user?.role) === 'User' ? 'var(--admin-primary)' : 'var(--admin-text-muted)'
                     }}>
                       {user?.role}
                     </span>
@@ -228,7 +238,7 @@ const UserManagement = () => {
                       <button onClick={() => handleOpenModal(user)} className="btn btn-secondary" style={{ minWidth: '32px', minHeight: '32px', padding: 0 }}><Edit2 size={14} /></button>
                       <button onClick={() => handleDelete(user?.id)} className="btn btn-danger" style={{ minWidth: '32px', minHeight: '32px', padding: 0 }}><Trash2 size={14} /></button>
                     </div>
-                  </td>
+                  </td> 
                 </tr>
               ))
             )}
@@ -313,7 +323,11 @@ const UserManagement = () => {
                         </select>
                     </div>
                 </div>
-                
+                <div className="form-group">
+                    <label className="form-label">Địa Chỉ</label>
+                    <input required className="form-control" value={formData.dia_chi}
+                        onChange={(e) => setFormData(prev => ({...prev, dia_chi: e.target.value}))} />
+                </div>
                 {/* Mật khẩu */}
                 <div className="form-group">
                     <label className="form-label">Mật khẩu</label>

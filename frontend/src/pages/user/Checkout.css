@@ -4,10 +4,11 @@
    ============================================================ */
 
 .ck-layout { 
-  display: grid; 
-  grid-template-columns: 1fr; 
-  gap: 1.5rem; 
-  align-items: start; 
+  display: flex;
+  flex-direction: row; /* Ép buộc nằm ngang */
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
 }
 
 @media (min-width: 1024px) {
@@ -24,9 +25,7 @@
 
 /* ── Form Section ── */
 .ck-col-main {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+flex: 2; min-width: 0;
 }
 
 .ck-card-bd { 
@@ -190,7 +189,7 @@
 
 /* ── Sidebar Summary ── */
 .ck-col-side {
-  position: relative;
+  flex: 1; position: sticky; top: 20px;
 }
 
 @media (min-width: 1024px) {

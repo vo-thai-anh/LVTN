@@ -47,7 +47,7 @@ class AuthController extends Controller
             $taiKhoan = TaiKhoan::create([
                 'ten_dang_nhap'   => $validated['ten_dang_nhap'],
                 'mat_khau'        => Hash::make($validated['mat_khau']),
-                'loai_nguoi_dung' => $validated['loai_nguoi_dung'] ?? 1,
+                'loai_nguoi_dung' => $validated['loai_nguoi_dung'] ?? 2,
             ]);
             $generatedKhachHangId = 'KH' . substr(time(), -8);
             $khachHang = KhachHang::create([
@@ -96,6 +96,7 @@ class AuthController extends Controller
                 'mat_khau'        => 'required|string|min:6',
                 'email'           => 'required|unique:taikhoan,email',
                 'ten_nhan_vien'   => 'required|string|max:100',
+                'dia_chi'         => 'required|string|max:255',
                 'so_dien_thoai'   => 'required|string|max:10',
                 'chuc_vu'         => 'required|string',
                 'loai_nguoi_dung' => 'required|integer|exists:loainguoidung,loai_nguoi_dung_id',
@@ -114,6 +115,7 @@ class AuthController extends Controller
                 'so_dien_thoai' => $validated['so_dien_thoai'],
                 'email'         => $validated['email'],
                 'chuc_vu'       => $validated['chuc_vu'],
+                'dia_chi'       => $validated['dia_chi'],
                 'tai_khoan_id'  => $taiKhoan->tai_khoan_id,
             ]);
             DB::commit();

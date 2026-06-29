@@ -38,15 +38,18 @@ const OrderDetail = () => {
   useEffect(() => {
     if (authLoad) return;
     if (!user) { navigate('/login'); return; }
+    
     orderAPI.getOrderDetail(id)
       .then(res => {
-        // Laravel show() returns the raw order object with its relations
-        setOrder(res);
+        // GIẢ SỬ API trả về { success: true, data: { ... } }
+        const orderData = res.data || res; 
+        console.log("Dữ liệu đơn hàng thực tế:", orderData);
+        setOrder(orderData);
       })
       .catch(() => { setError(true); toast.error('Không tìm thấy đơn hàng'); })
       .finally(() => setLoading(false));
   }, [id, user, authLoad, navigate]);
-
+  
   const handleCancel = async () => {
     if (!window.confirm('Bạn có chắc muốn hủy đơn hàng này không?')) return;
     setCanceling(true);
@@ -76,7 +79,7 @@ const OrderDetail = () => {
     </div>
   );
 
-  const items     = order.chitietdonhangs || order.chi_tiet_don_hangs || order.chitietdonhang || [];
+  const items     = order.chitiet || order.chi_tiet_don_hangs || order.chitietdonhang || [];
   const canCancel = order.trang_thai === 'CHỜ_XÁC_NHẬN';
 
   return (
@@ -106,7 +109,7 @@ const OrderDetail = () => {
                   <div key={it.id || it.sach_id} className={`od-item${idx < items.length - 1 ? ' sep' : ''}`}>
                     <img src={it.sach?.anh_bia || 'https://picsum.photos/seed/b/50/70'} alt="cover" className="od-img" />
                     <div className="od-meta">
-                      <Link to={`/product/${it.sach_id}`} className="od-name">{it.sach?.ten_sach || `Sách #${it.sach_id}`}</Link>
+                      <Link to={`/product/${it.sach?.sach_id}`} className="od-name">{it.sach?.ten_sach || `Sách #${it.sach_id}`}</Link>
                       <span className="od-price-qty">{fmt(it.don_gia)} <span className="od-bread-sep">x</span> {it.so_luong}</span>
                     </div>
                     <span className="od-total">{fmt(it.thanh_tien)}</span>
@@ -138,7 +141,7 @@ const OrderDetail = () => {
                 </div>
                 <div className="od-sum-row">
                   <span className="od-sum-lbl od-flex-center"><Truck size={14}/> Thanh toán:</span>
-                  <span className="od-sum-val">{order.phuong_thuc_thanh_toan}</span>
+                  <span className="od-sum-val">{order.thanhtoan?.phuong_thuc?.mo_ta|| 'Chưa xác định'}</span>
                 </div>
 
                 <div className="od-sum-line" />

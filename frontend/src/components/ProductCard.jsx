@@ -9,7 +9,7 @@ const ProductCard = ({ sach }) => {
 
   return (
 
-    <Link to={`/product/${sach.sach_id}`} className="pc2-card">
+    <Link to={`/product/${sach?.sach_id}`} className="pc2-card">
       <div className="pc2-img-wrap">
         <img
           src={getImageUrl(sach.anh_bia)}

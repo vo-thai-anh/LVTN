@@ -42,9 +42,10 @@ const Dashboard = () => {
   const fetchRealData = async () => {
     try {
       const [booksRes, catsRes, usersRes] = await Promise.all([
-        AdminAPI.getBooks({ size: 999 }), // Lấy nhiều hơn để tính toán Dashboard
+        AdminAPI.getBooks({ size: 999 }),
         AdminAPI.getCategories(),
-        AdminAPI.getUsers({ size: 999 })
+        AdminAPI.getUsers({ size: 999 }),
+        AdminAPI.getNhanViens({ size: 999 })
       ]);
       
       const bookList = booksRes?.content || booksRes || [];
@@ -117,7 +118,7 @@ const Dashboard = () => {
                         <span style={{ fontWeight: 500, fontSize: '14px', color: 'var(--admin-text-head)' }}>{book?.tenSach}</span>
                       </div>
                     </td>
-                    <td>{book?.gia?.toLocaleString() || 0}đ</td>
+                    <td> {book?.gia ? `${Number(book.gia).toLocaleString()}đ` : '0đ'}</td>
                     <td className="text-center">
                       <span style={{ fontWeight: 500 }}>{book?.soLuong || 0}</span>
                     </td>
@@ -152,9 +153,9 @@ const Dashboard = () => {
               )}
            </div>
 
-           <div style={{ background: 'var(--admin-bg-pure)', padding: '24px', borderRadius: 'var(--admin-radius)', border: '1px solid var(--admin-divider)' }}>
-             <h4 style={{ margin: '0 0 16px', fontWeight: 500, fontSize: '14px' }}>Tắt</h4>
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ background: 'var(--admin-bg-pure)', padding: '24px', borderRadius: 'var(--admin-radius)', border: '1px solid var(--admin-divider)' }}>
+              <h4 style={{ margin: '0 0 16px', fontWeight: 500, fontSize: '14px' }}>Tắt</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <button 
                   onClick={() => window.location.href = '/admin/books'}
                   className="btn btn-secondary" 

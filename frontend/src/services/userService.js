@@ -25,7 +25,6 @@ export const categoryAPI = {
 
 // ================= GIỎ HÀNG =================
 export const cartAPI = {
-  // Trả về { success: true, data: { thong_tin_gio_hang, tong_tien_thanh_toan } }
   getCart: () => axios.get('/giohang'),
   addToCart: (data) => axios.post('/chitietgiohang/them', data),
   updateQuantity: (sach, so_luong) => axios.put(`/chitietgiohang/${sach}`, { so_luong }),

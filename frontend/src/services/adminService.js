@@ -106,10 +106,16 @@ export const AdminAPI = {
     const data = normalizeApiResponse(res);
     return Array.isArray(data) ? data.map(mapUser) : (Array.isArray(data?.data) ? data.data.map(mapUser) : []);
   },
+  getNhanViens: async () => {
+    const res = await axios.get('/nguoidung');
+    const data = normalizeApiResponse(res);
+    return Array.isArray(data) ? data.map(mapUser) : (Array.isArray(data?.data) ? data.data.map(mapUser) : []);
+  },
   addUser: (data) => {
     return axios.post('/registerNhanVien', {
       ten_dang_nhap: data.ten_dang_nhap,
       mat_khau: data.mat_khau,
+      dia_chi: data.dia_chi,
       mat_khau_confirmation: data.mat_khau,
       email: data.email,
       ten_nhan_vien: data.ten_nhan_vien,
@@ -131,12 +137,18 @@ export const AdminAPI = {
     const data = normalizeApiResponse(res);
     return Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
   },
+  // updateOrderStatus: async (id, newStatus) => {
+  //   // Dùng patch theo đúng route Admin đã thống nhất
+  //   return await axios.patch(`/admin/donhang/${id}/status`, {
+  //       trang_thai: newStatus
+  //   });
+  // },
   getOrderById: async (id) => {
     const res = await axios.get(`/donhang/${id}`);
     const data = normalizeApiResponse(res);
     return data;
   },
-  updateOrderStatus: (id, statusData) => axios.put(`/donhang/${id}`, statusData),
+  updateOrderStatus: (id, statusData) => axios.patch(`/donhang/${id}`, statusData),
   getRoles: async () => {
       try {
           const res = await axios.get('/loainguoidung');
