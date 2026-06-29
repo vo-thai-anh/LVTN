@@ -63,24 +63,29 @@ const UserManagement = () => {
   }, [searchTerm]);
 
   const fetchData = async () => {
-      try {
-          setLoading(true);
-          const [userRes, nvRes] = await Promise.all([
-              AdminAPI.getUsers({ keyword: searchTerm, page: page, size: 8 }),
-              AdminAPI.getNhanViens({ keyword: searchTerm, page: page, size: 8 })
-          ]);
-          console.log("Dữ liệu userRes nhận được:", userRes);
-          const dataList = userRes.data || userRes.content || userRes;
-          setUsers(Array.isArray(dataList) ? dataList : []); 
-          setTotalPages(userRes.totalPages || 0);
-          setNhanVien(nvRes); 
-      } catch (err) {
-          toast.error('Lỗi tải dữ liệu');
-          console.error(err);
-      } finally {
-          setLoading(false);
-      }
-  };
+    try {
+        setLoading(true);
+        // Lưu ý: Nếu AdminAPI.getUsers không nhận params, đừng truyền vào
+        const [userRes, nvRes] = await Promise.all([
+            AdminAPI.getUsers(),
+            AdminAPI.getNhanViens()
+        ]);
+
+        console.log("Dữ liệu nhận được:", userRes, nvRes);
+
+        // Đảm bảo setUsers nhận vào mảng
+        setUsers(Array.isArray(userRes) ? userRes : []);
+        setNhanVien(Array.isArray(nvRes) ? nvRes : []);
+        
+        // Nếu API có phân trang, hãy kiểm tra lại cấu trúc trả về của AdminAPI
+        // setTotalPages(...) 
+    } catch (err) {
+        toast.error('Lỗi tải dữ liệu');
+        console.error(err);
+    } finally {
+        setLoading(false);
+    }
+};
 
   const handleOpenModal = (user = null) => {
     if (user) {

@@ -4,92 +4,88 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\Controller;
 use App\Models\PhieuXuat;
+use App\Models\PhieuXuatChiTiet;
 use App\Models\Sach;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PhieuXuatController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // Lấy danh sách phiếu xuất kèm chi tiết
     public function index()
     {
-        $phieuXuats = PhieuXuat::with('Sach')->paginate(20);
-        return response()->json([
-            'success' => true,
-            'data'    => $phieuXuats
-        ]);
+        $phieuXuats = PhieuXuat::with(['chiTiet.sach'])->latest()->paginate(20);
+        return response()->json(['success' => true, 'data' => $phieuXuats]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    // Tạo phiếu xuất mới (Kiểm tra tồn kho trước khi xuất)
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'sach'      => 'required|exists:sach,sach_id',
+        $request->validate([
             'ngay_xuat' => 'required|date',
-            'tong_tien' => 'required|numeric|min:0',
-            'so_luong'  => 'required|integer|min:1'
+            'chi_tiet'  => 'required|array|min:1',
+            'chi_tiet.*.sach_id' => 'required|exists:sach,sach_id',
+            'chi_tiet.*.so_luong' => 'required|integer|min:1',
+            'chi_tiet.*.don_gia_xuat' => 'required|numeric|min:0',
         ]);
 
-        $phieuXuat = new PhieuXuat($validated);
-        $phieuXuat->phieu_xuat_id = strtoupper(Str::random(10));
-        $phieuXuat->save();
+        return DB::transaction(function () use ($request) {
+            // 1. Kiểm tra tồn kho trước khi tạo phiếu
+            foreach ($request->chi_tiet as $item) {
+                $sach = Sach::where('sach_id', $item['sach_id'])->lockForUpdate()->first();
+                if ($sach->so_luong_ton < $item['so_luong']) {
+                    return response()->json([
+                        'success' => false, 
+                        'message' => "Sách '{$sach->ten_sach}' không đủ tồn kho (còn: {$sach->so_luong_ton})"
+                    ], 422);
+                }
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Tạo phiếu xuất thành công',
-            'data'    => $phieuXuat
-        ], 201);
+            // 2. Tạo phiếu tổng
+            $phieu = PhieuXuat::create([
+                'ngay_xuat' => $request->ngay_xuat,
+                'ghi_chu'   => $request->ghi_chu,
+                'tong_tien' => collect($request->chi_tiet)->sum(fn($i) => $i['so_luong'] * $i['don_gia_xuat'])
+            ]);
+
+            // 3. Lưu chi tiết và giảm tồn kho
+            foreach ($request->chi_tiet as $item) {
+                PhieuXuatChiTiet::create([
+                    'phieu_xuat_id' => $phieu->phieu_xuat_id,
+                    'sach_id'       => $item['sach_id'],
+                    'so_luong'      => $item['so_luong'],
+                    'don_gia_xuat'  => $item['don_gia_xuat']
+                ]);
+
+                // Giảm tồn kho
+                Sach::where('sach_id', $item['sach_id'])->decrement('so_luong_ton', $item['so_luong']);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Xuất kho thành công', 'data' => $phieu], 201);
+        });
     }
 
-    /**
-     * Display the specified resource.
-     */
+    // Xem chi tiết phiếu xuất
     public function show(string $id)
     {
-        $phieuXuat = PhieuXuat::with('Sach')->findOrFail($id);
-        return response()->json([
-            'success' => true,
-            'data'    => $phieuXuat
-        ]);
+        $phieu = PhieuXuat::with('chiTiet.sach')->findOrFail($id);
+        return response()->json(['success' => true, 'data' => $phieu]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        $phieuXuat = PhieuXuat::findOrFail($id);
-        $validated = $request->validate([
-            'sach'      => 'sometimes|required|exists:sach,sach_id',
-            'ngay_xuat' => 'sometimes|required|date',
-            'tong_tien' => 'sometimes|required|numeric|min:0',
-            'so_luong'  => 'sometimes|required|integer|min:1'
-        ]);
-
-        $phieuXuat->update($validated);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Cập nhật phiếu xuất thành công',
-            'data'    => $phieuXuat
-        ]);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
+    // Hủy phiếu xuất (Hoàn trả tồn kho)
     public function destroy(string $id)
     {
-        $phieuXuat = PhieuXuat::findOrFail($id);
-        $phieuXuat->delete();
+        return DB::transaction(function () use ($id) {
+            $phieu = PhieuXuat::with('chiTiet')->findOrFail($id);
+            
+            // Cộng lại tồn kho
+            foreach ($phieu->chiTiet as $item) {
+                Sach::where('sach_id', $item->sach_id)->increment('so_luong_ton', $item->so_luong);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Xóa phiếu xuất thành công'
-        ]);
+            $phieu->delete();
+            return response()->json(['success' => true, 'message' => 'Đã hủy phiếu xuất và hoàn trả tồn kho']);
+        });
     }
 }

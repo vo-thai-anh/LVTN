@@ -137,12 +137,6 @@ export const AdminAPI = {
     const data = normalizeApiResponse(res);
     return Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
   },
-  // updateOrderStatus: async (id, newStatus) => {
-  //   // Dùng patch theo đúng route Admin đã thống nhất
-  //   return await axios.patch(`/admin/donhang/${id}/status`, {
-  //       trang_thai: newStatus
-  //   });
-  // },
   getOrderById: async (id) => {
     const res = await axios.get(`/donhang/${id}`);
     const data = normalizeApiResponse(res);
@@ -159,6 +153,11 @@ export const AdminAPI = {
           throw error;
       }
   },
+  getPhieuNhap: () => axiosClient.get('/phieu-nhap'),
+  createPhieuNhap: (data) => axiosClient.post('/phieu-nhap', data),
+  getPhieuXuat: () => axiosClient.get('/phieu-xuat'),
+  createPhieuXuat: (data) => axiosClient.post('/phieu-xuat', data),
+  getTonKho: () => axiosClient.get('/ton-kho')
 };
 
 export default AdminAPI;

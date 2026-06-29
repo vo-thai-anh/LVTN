@@ -6,6 +6,9 @@ import BookManagement from './BookManagement';
 import CategoryManagement from './CategoryManagement';
 import UserManagement from './UserManagement';
 import OrderManagement from './OrderManagement';
+import InventoryImportPage from './InventoryImportPage';
+import InventoryExportPage from './InventoryExportPage';
+
 
 const AdminApp = () => {
   return (
@@ -16,7 +19,8 @@ const AdminApp = () => {
         <Route path="categories" element={<CategoryManagement />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="orders" element={<OrderManagement />} />
-        
+        <Route path="InventoryExportPage" element={<InventoryExportPage />} />
+        <Route path="InventoryImportPage" element={<InventoryImportPage />} />
         {/* Redirect any other sub-paths to admin dashboard */}
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Route>

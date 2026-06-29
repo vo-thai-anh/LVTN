@@ -3,7 +3,8 @@ import { NavLink, useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, BookOpen, Layers, Users, 
   ShoppingCart, LogOut, Package, ChevronLeft, ChevronRight,
-  Bell, Search, User, ExternalLink
+  Bell, Search, User, ExternalLink, 
+  Truck, Database, Tag, Megaphone
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -91,28 +92,34 @@ const AdminLayout = () => {
               {!isCollapsed && <span>Đơn hàng</span>}
             </NavLink>
           </NavGroup>
+
           <NavGroup title="Kho và Nhà Cung Cấp" isCollapsed={isCollapsed}>
-            <NavLink to="/admin/Kho" className="admin-nav-item">
-              <Users size={18} />
+            <NavLink to="/admin/phieu-nhap" className="admin-nav-item">
+              <Package size={18} />
               {!isCollapsed && <span>Nhập Kho</span>}
+            </NavLink>
+            <NavLink to="/admin/phieu-xuat" className="admin-nav-item">
+              <Truck size={18} />
+              {!isCollapsed && <span>Phiếu Xuất</span>}
             </NavLink>
             <NavLink to="/admin/NCC" className="admin-nav-item">
               <ShoppingCart size={18} />
               {!isCollapsed && <span>Nhà Cung Cấp</span>}
             </NavLink>
-            <NavLink to="/admin/KK" className="admin-nav-item">
-              <ShoppingCart size={18} />
-              {!isCollapsed && <span>Kiểm Kho</span>}
-            </NavLink>
-          </NavGroup>
-          <NavGroup title="Marketing và Khuyến Mãi" isCollapsed={isCollapsed}>
-            <NavLink to="/admin/MGG" className="admin-nav-item">
-              <Users size={18} />
+            <NavLink to="/admin/ton-kho" className="admin-nav-item">
+                <Database size={18} />
+                {!isCollapsed && <span>Tồn Kho</span>}
+              </NavLink>
+            </NavGroup>
+          
+          <NavGroup title="Marketing & Khuyến Mãi" isCollapsed={isCollapsed}>
+            <NavLink to="/admin/ma-giam-gia" className="admin-nav-item">
+              <Tag size={18} />
               {!isCollapsed && <span>Mã giảm giá</span>}
             </NavLink>
-            <NavLink to="/admin/CD" className="admin-nav-item">
-              <ShoppingCart size={18} />
-              {!isCollapsed && <span>Chiến dịch khuyến mãi</span>}
+            <NavLink to="/admin/chien-dich" className="admin-nav-item">
+              <Megaphone size={18} />
+              {!isCollapsed && <span>Chiến dịch</span>}
             </NavLink>
           </NavGroup>
         </div>

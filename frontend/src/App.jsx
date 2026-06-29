@@ -26,8 +26,8 @@ import Contact from './pages/user/Contact';
 import AdminApp from './pages/admin/AdminApp';
 import ProtectedRoute from './components/ProtectedRoute';
 import PaymentGateway from './pages/user/Payment';
-
-const MainLayout = ({ children }) => {
+import InventoryImportPage from './pages/admin/InventoryImportPage';
+import InventoryExportPage from './pages/admin/InventoryExportPage';const MainLayout = ({ children }) => {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
 
@@ -73,7 +73,9 @@ const AnimatedRoutes = () => {
         <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
         <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />
         <Route path="/payment-gateway" element={<PageWrapper><PaymentGateway /></PageWrapper>} />
-        
+        <Route path="/admin/phieu-nhap" element={<InventoryImportPage />} />
+        <Route path="/admin/phieu-xuat" element={<InventoryExportPage />} />
+        {/* <Route path="/admin/ton-kho" element={<InventoryReportPage />} /> */}
         {/* Protected Admin Routes */}
         <Route
             path="/admin/*"
